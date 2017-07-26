@@ -52,7 +52,14 @@ We will start with just one repository for our application and pipeline. We can 
   mkdir -p tasks
   ```
 
-## Build maven project and run unit tests
+We will complete the pipeline in 7 separate labs:
+- [Lab 1 - Build maven project and run unit tests](#lab1)
+- [Lab 2 - Tasks should be defined in "Task Definition" files rather than inline in the pipeline](#lab2)
+- [Lab 3 - Publish application artifact (jar) to a central repository](#lab3)
+- [Lab 4 - Deploy application to PCF](#lab4)
+- [Lab 5 - Externalize credentials](#lab5)
+
+## <a name="lab1"></a> Lab 1 - Build maven project and run unit tests
 
 1. Create an empty pipeline file `ci/appication/pipeline.yml`
 
@@ -160,7 +167,7 @@ We will start with just one repository for our application and pipeline. We can 
 
 5. So far we have managed to build our maven project.
 
-## Tasks should be defined in "Task Definition" files rather than inline in the pipeline
+## <a name="lab2"></a> Lab 2 - Tasks should be defined in "Task Definition" files rather than inline in the pipeline
 
 So far we have worked on a single file, the `pipeline.yml`. On this file we have defined **inline** the task configuration, a.k.a. *task definition*. However that is far from ideal for various reasons:
   - pipeline becomes difficult to read and maintain
@@ -269,7 +276,7 @@ So far we have worked on a single file, the `pipeline.yml`. On this file we have
 
   ```
 
-## Publish application artifact (jar) to a central repository
+## <a name="lab3"></a> Lab 3 - Publish application artifact (jar) to a central repository
 
 There are two ways of producing an output or outcome in Concourse:
   - One way is to use a Concourse Resource making Concourse aware that we have produced an output (potentially versioned)
@@ -361,7 +368,7 @@ If we want to leverage this pipeline mechanism we have to publish the applicatio
 
   > Notice Concourse fetches a resource right after pushing it.
 
-## Deploy application to PCF
+## <a name="lab4"></a> Lab 4 - Deploy application to PCF
 
 We are going to deploy to PCF the artifact built (i.e. the exact version) by the pipeline. All we have to do is add a new job whose input resource is the `nexus-repo` resource. Furthermore, we are only interested on those versions built by the `build-and-verify` job. If we don't specify that dependency, our pipeline has 2 parallel jobs which can trigger independently. One triggers we commit a change to `source-code` or the other when someone publishes a new jar into `nexus-repo`.
 
@@ -416,7 +423,7 @@ First we are going to add a new job called `deploy` with two tasks. One which pr
   ```
 4. Add task script. See that it expects two folders: `artifact` and `manifest`. And also 4 environment variables:  APP_NAME, APP_HOST and APP_DOMAIN. APP_PATH is built locally.
 
-  ```sh
+  ```
   #!/bin/bash
 
   set -eu # fail if it finds unbound variables
@@ -523,3 +530,140 @@ We are ready to push to **PCF**. All we have to do is add new resource that allo
   ![Pipeline deploying to PCF](assets/concourse-8.png)
 
 5. Bonus: Verify that the application is running
+
+Hint: Add another job that triggers when the application is deployed with a task that simply calls (`curl https://appURL/health`)
+
+
+## <a name="lab5"> Lab 5 - Externalize credentials
+
+Probably most of you have already realized that we are committing the pipeline.yml into Git with credentials in clear, like the username and password of Nexus.
+We are going to externalize sensitive credentials into a secrets.yml file and non-sensitive data into a credentials.yml.
+
+1. Put non-sensitive credentials into `credentials.yml`. We are going to store it in the root of the repo.
+
+  ```YAML
+  source-code-url: https://github.com/MarcialRosales/app1
+  source-code-branch: master
+
+
+  artifact-repo-url: http://192.168.1.36:8081/nexus/content/repositories/snapshots
+  artifact: com.example:demo:jar
+
+  pcf-resource-api: https://api.system-dev.chdc20-cf.solera.com
+  pcf-resource-organization: marcial.rosales@r3pi.io
+  pcf-resource-space: sandbox
+  pcf-resource-skip_cert_check: false
+
+
+  pcf-app-name: demo
+  pcf-app-host: mr-demo
+  pcf-app-domain: apps-dev.chdc20-cf.solera.com
+
+  ```
+
+
+2. Put sensitive credentials into `secrets.yml`
+
+  ```YAML
+  artifact-repo-username: admin
+  artifact-repo-password: admin123
+
+  pcf-resource-username: Marcial.Rosales@r3pi.io
+  pcf-resource-password: XXXXX
+
+  ```
+
+3. Refactor pipeline, i..e use variable names rather than final values.
+
+  ```YAML
+  ---
+
+  resource_types:
+  - name: maven-resource
+    type: docker-image
+    source:
+      repository: pivotalpa/maven-resource
+      tag: 1.3.2
+
+  resources:
+  - name: source-code
+    type: git
+    source:
+      uri: {{source-code-url}}
+      branch: {{source-code-branch}}
+
+  - name: artifact-repo
+    type: maven-resource
+    source:
+      url: {{artifact-repo-url}}
+      artifact: {{artifact}}
+      username: {{artifact-repo-username}}
+      password: {{artifact-repo-password}}
+
+  - name: pcf-resource
+    type: cf
+    source:
+      api: {{pcf-resource-api}}
+      username: {{pcf-resource-username}}
+      password: {{pcf-resource-password}}
+      organization: {{pcf-resource-organization}}
+      space: {{pcf-resource-space}}
+      skip_cert_check: {{pcf-resource-skip_cert_check}}
+
+  jobs:
+  - name: build-and-verify
+    plan:
+    - get: source-code
+      trigger: true
+    - task: build-and-verify
+      file: source-code/tasks/build.yml
+    - put: artifact-repo
+      params:
+        file: build-artifact/*.jar
+        pom_file: source-code/pom.xml
+
+  - name: deploy
+    plan:
+    - get: artifact-repo
+      trigger: true
+      passed: [build-and-verify]
+    - get: source-code
+    - task: generate-manifest
+      file: source-code/tasks/generate-manifest.yml
+      input_mapping: {artifact: artifact-repo}
+      params:
+        APP_NAME: {{pcf-app-name}}
+        APP_HOST: {{pcf-app-host}}
+        APP_DOMAIN: {{pcf-app-domkain}}
+    - put: pcf-resource
+      params:
+        manifest: manifest/manifest.yml
+
+  ```
+
+4. Commit the changes
+
+  ```sh
+  touch .gitignore
+  echo "secrets.yml" >> .gitignore
+  git add .gitignore
+  git add credentials.yml
+  git add ci/application/pipeline.yml
+  git commit -m "Externalized credentials"
+  git push
+  ```
+5. Update pipeline. We need to pass the variables files.
+  `fly -t local sp -p pipeline -c ci/application/pipeline.yml -l credentials.yml -l secrets.yml`
+
+  We can run the command below to get the final pipeline with all the variables resolved:
+  `fly -t local gp -p pipeline`
+
+> We externalized every configurable attribute up to a point that this pipeline could be used to build other applications not just `app1`.
+
+### Credential Management
+
+We are not storing the `secrets.yml` in Git. There are various techniques to deal with secret management:
+- Generate a symmetrical encryption key and store it in some password mgt tool like Lastpass. Encrypt `secrets.yml` and store it in git.
+- Store secrets.yml in some secure location (like LastPass and similar) and retrieve it when we need to push the pipeline.
+- Use [Credential Management](https://concourse.ci/creds.html) feature in Concourse since 3.3.0. Secrets are stored in Vault or CredHub and we need to tell Concourse the key to each secret value very similar we do today with variables. Concourse resolves the key when it needs to. There is a big difference compared to the other models because secrets are never stored in Concourse's db.
+- Use [Spruce](https://github.com/geofffranks/spruce) to resolve secrets stored in Vault just before we push the pipeline in Concourse.
