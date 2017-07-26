@@ -4,22 +4,33 @@ Concourse workshop
 
 # Building basic pipeline to familiarize with pipeline concepts and Concourse itself (**fly** and Web UI)
 
-We are going to build a pipeline step by step and on each step we introduce a new concept into the pipeline.
+We are going to build a pipeline step by step and on each step we introduce new concepts into the pipeline.
 
 But what is a pipeline then?
-  - A chain of actions or tasks where each task takes some input and produces an output.
+  - A chain of actions or tasks where each task takes some input and produces an output. For instance in the diagram below, `Build` takes a `source` as input and produces a `jar` as output. That same `jar` becomes the input for `Deploy`.
+    ```
+        {source}----[ Build ]---{jar}---[ Deploy ]----
+    ```
   - In Concourse, we define a pipeline in a plain YML file. No UI, no external configuration required in concourse. This is called **pipeline as code**.
   - We deploy the pipeline in Concourse by calling the appropriate commands in **fly**
 
-Clear benefit:
+Benefit of this approach:
   - Reproducible builds because configuration is on a file which should be versioned controlled (e.g. git) and Concourse has no state, workers are stateless.
-  - Because there is no state in Concourse, no big deal if we loose concourse. With Bosh we can have Concourse deployed in minutes. We only need to redeploy our pipelines.
+  - Because there is no state in Concourse, no big deal if we loose Concourse. With Bosh we can have Concourse deployed in minutes. We only need to redeploy our pipelines.
 
 
-It is the time to understand that Concourse is more than a CI tool. It is an automation tool that allows us to take an input (**resource**) and orchestrate the execution of scripts  (**tasks**) which take input(s) and produce output(s) (another **resource**).
+Concourse is more than a CI tool. It is an automation tool that allows us to take any input (**resource**) and orchestrate the execution of scripts (**tasks**) which take input(s) and produce output(s) (another **resource**).
 
+We will complete the pipeline in 7 separate labs:
+- [Lab 1 - Print the hello world](#lab1)
+- [Lab 2 - Produce a file with a greeting message](#lab2)
+- [Lab 3 - Produce a file with a greeting message which must be configured thru a variable](#lab3)
+- [Lab 4 - Job shall produce a file in one task and in a separate task shall print it](#lab4)
+- [Lab 5 - Read part of the greeting message from a git repository](#lab5)
+- [Lab 6 - Send greeting message to a slack channel and remove the `print-greeting` task](#lab6)
+- [Lab 7 - Send a different greeting message to slack channel if the task `produce-greeting` failed](#lab7)
 
-## Lab 1 - Print the hello world
+## <a name="lab1></a> Lab 1 - Print the hello world
 
 Lets start building a "hello world" pipeline to learn the pipeline mechanics and get familiar with Concourse UI too.
 
@@ -43,8 +54,8 @@ Lets start building a "hello world" pipeline to learn the pipeline mechanics and
 3. Let's deploy the pipeline first.  
   `fly -t main sp -p hello-world -c pipeline.yml`
 
-  `sp` is the alias of `set-pipeline`
-  `c` is the name of the pipeline file
+  `sp` is the alias of `set-pipeline`  
+  `c` is the name of the pipeline file  
   `p` is the name we want to give to our pipeline  
 
 4. Concourse will always print out the difference between what it exists in concourse and what we are deploying. Because this is a brand new pipeline all lines are in green color.
@@ -70,32 +81,35 @@ Lets start building a "hello world" pipeline to learn the pipeline mechanics and
   apply configuration? [yN]:
   ```
 5. Lets visit Concourse UI.
-  - available pipelines
-  - pipeline's states: paused, running. We are in full control. We can unpause it from the UI or from **fly**
-    `fly -t main up -p hello-world`
-  - job's states
+
   ![Concourse first pipeline](assets/concourse-2.png)
 
+  - Available pipelines
+  - Pipeline's states: paused, running. We are in full control.
+  - We can unpause it from the UI or from **fly**:  
+    `fly -t main up -p hello-world`
+  - Job's states
+
 6. Triggering jobs
-  - manually (via **fly** or thru UI) or automatic (via a resource)
+  - manually (via **fly** or thru UI) or automatic (via a resource)  
     `fly -t local tj hello-world/job-hello-world` to trigger a job
   - conditions that must be met before running a job:
     - it cannot be paused neither the pipeline
     - it has not exceeded the maximum concurrent jobs (http://concourse.ci/configuring-jobs.html#max_in_flight, http://concourse.ci/configuring-jobs.html#serial or http://concourse.ci/configuring-jobs.html#serial_groups)
   - Concourse runs each task in a separate container (in the docker image we specified in the task)
-  - Monitor job execution thru UI or thru **fly**
-    `fly -t local builds` list all the jobs executed and being executed
+  - Monitor job execution thru UI or thru **fly**  
+    `fly -t local builds` list all the jobs executed and being executed  
     `fly -t local watch -j hello-world/job-hello-world` tail the logs from the jobId. We obtain the jobId from the previous command.  
 
 
 ### Pipeline concepts
 
-- A **pipeline** is a chain of jobs. Soon we will go thru what changes the jobs together. (See `jobs` in pipeline yml)
+- A **pipeline** is a chain of jobs. Soon we will see what chains the jobs together. (See `jobs` in pipeline yml)
 - **Jobs** describe the actual work a pipeline does. A Job consists of a build plan. (See `plan` )
-- A **build plan** itself consists of multiple steps. For now, each step is a task. But we will see later that there are 2 more steps: *fetch* and *update resource steps*. These steps can be arranged to run in parallel or in sequence. (See array with just one element `task`)
-- A **task** is a script executed within a container whose docker image we define in the pipeline. We can use any scripting language available in the container's image, e.g. python, perl, bash, ruby. (see where we run it `platform`, how we run it `image_resource`, and what we run `run`)
+- A **build plan** consists of multiple steps. For now, each step is a task. But we will see later that there are 2 more steps: *fetch* and *update resource steps*. These steps can be arranged to run in parallel or in sequence. (See array with just one element `task`)
+- A **task** is a script executed within a container using a docker image that we specify in the pipeline. We can use any scripting language available in the docker's image, e.g. python, perl, bash, ruby. (see  `platform`, `image_resource`, and `run` attributes of a task)
 
-## Lab 2 - Produces a file with a greeting message
+## <a name="lab2></a> Lab 2 - Produce a file with a greeting message
 
 We continue with the previous pipeline but this time we are going to put more logic into the task. We are going to produce a file with a greeting and print out that file.
 
@@ -125,7 +139,7 @@ We continue with the previous pipeline but this time we are going to put more lo
 2. Deploy the new pipeline with a different name:
   `fly -t local sp -p greeting -c pipeline.yml`
 
-## Lab 3 - Produces a file with a greeting message which must be configured thru a variable
+## <a name="lab3"></a> Lab 3 - Produce a file with a greeting message which must be configured thru a variable
 
 Eventually we need to customize the pipeline and to do that there is a concept of variables. **fly** does variable interpolation right before we set the pipeline. For more information, check out http://concourse.ci/fly-set-pipeline.html.
 
@@ -166,7 +180,7 @@ Eventually we need to customize the pipeline and to do that there is a concept o
   - there is another way of doing variable interpolation that we will explorer in another lab.
 
 
-## Lab 4 - Job shall produce a file in one task and in a separate task shall print it
+## <a name="lab4"></a> Lab 4 - Job shall produce a file in one task and in a separate task shall print it
 
 We learnt earlier that a job has a build plan which consists of multiple steps. We are going to introduce a second step/task to our job. Additionally, we are going to introduce the concept of artifacts. The first task will produce an output artifact and the second task will consume that output as an input artifact.
 
@@ -229,7 +243,7 @@ We learnt earlier that a job has a build plan which consists of multiple steps. 
 
 Note: When the job terminates, the artifacts we have generated within the job like the `greetings` one, are destroyed. They are simply volumes that Concourse mounts onto the containers but once the job terminates those volumes are destroyed. If we don't want to loose that data we need to put it somewhere, i.e. onto an output **resource**, e.g. to Nexus or Artifactory.  
 
-## Lab 5 - Read part of the greeting message from a git repository
+## <a name="lab5"></a> Lab 5 - Read part of the greeting message from a git repository
 
 The greeting message should consist of the `GREETING_MSG` variable followed by the first line of the README.md file from a github repo.
 
@@ -308,7 +322,7 @@ jobs:
 5. Commit a change and push it to your repo so that Concourse detects it.
 
 
-## Lab 6 - Send greeting message to a slack channel and remove the `print-greeting` task
+## <a name="lab6"></a> Lab 6 - Send greeting message to a slack channel and remove the `print-greeting` task
 
 In the previous lab, we added the **git** **resource** we see below. We used it as an input resource.
   ```YAML
@@ -360,7 +374,7 @@ Let's go step by step:
 
 We know that Concourse executes a build plan step by step. If the task `print-greeting` failed (try it out by adding `exit 2` command), it would skip the last step, the `put` step.
 
-## Lab 7 - Send a different greeting message to slack channel if the task `produce-greeting` failed
+## <a name="lab7"></a> Lab 7 - Send a different greeting message to slack channel if the task `produce-greeting` failed
 
 We can tag every step in a build plan with a callback step. The callbacks are `on_success`, `on_failure`, `ensure`.
 
