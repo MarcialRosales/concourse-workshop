@@ -110,8 +110,8 @@ One quick way to install **fly** is to go to the concourse ui, login with your t
 
 Another way to install it is by download them from http://concourse.ci/downloads.html.
 
-The first command we need to use is to `login`. This command will associated an alias with our login credentials that we will use in all the commands that call afterwards.
-But it is good that we know the `help` command and discover the arguments we pass to the `login`:
+The first command we need to use is to `login`. This command associates an alias with our login credentials. Every command must be accompanied by this alias.
+Check out the `help` command and discover the arguments we pass to the `login`:
 
 ```
 fly login --help
@@ -139,15 +139,7 @@ Let's login now. I am going to use `local` as the target name but we can use any
 fly -t local login -c http://myconcourse.com -n ourteam -u myuser -p mypassword
 ```
 
-> During the login process, the *fly* command may inform us that we need to upgrade it because our client does not have the server's version.
+> During the login process, the *fly* command may inform us that we need to upgrade it because our client does not match the server's version.
 Should that happened we only need to invoke the command: `fly -t mytarget sync`.
 
 > **fly** save your target in ~/.flyrc
-
-
-
-## Best practices:
-+ custom images over public generic ones
-+ use versioned image to aim for consistent pipelines .. no surprises if someone put a new version of a docker image which does not work
-+ externalize tasks from pipeline into github : yaml file + script file
-+ use resource mapping names to keep scripts independent from where they are used or invoked, i..e the pipelines .
