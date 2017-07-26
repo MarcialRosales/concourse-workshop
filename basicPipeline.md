@@ -109,7 +109,7 @@ Lets start building a "hello world" pipeline to learn the pipeline mechanics and
 - A **build plan** consists of multiple steps. For now, each step is a task. But we will see later that there are 2 more steps: *fetch* and *update resource steps*. These steps can be arranged to run in parallel or in sequence. (See array with just one element `task`)
 - A **task** is a script executed within a container using a docker image that we specify in the pipeline. We can use any scripting language available in the docker's image, e.g. python, perl, bash, ruby. (see  `platform`, `image_resource`, and `run` attributes of a task)
 
-## <a name="lab2></a> Lab 2 - Produce a file with a greeting message
+## <a name="lab2"></a> Lab 2 - Produce a file with a greeting message
 
 We continue with the previous pipeline but this time we are going to put more logic into the task. We are going to produce a file with a greeting and print out that file.
 
