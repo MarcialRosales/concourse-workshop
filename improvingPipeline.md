@@ -3,12 +3,13 @@ Concourse workshop
 
 There are a number of things we can do to improve our pipeline. It won't be in a format of a lab because otherwise the workshop would last for days. However, if time permits, the attendees can choose which of the following topics is of most interests and we can implement them.
 
-- [Use internal central repo to resolve dependencies (MUST)](#topic-1)
+- [Use internal repo to resolve dependencies rather than Maven central repo](#topic-1)
 - [Create scripts to facilitate setting pipelines](#topic-2)
 - [Artifacts version and releases](#topic-3)
 - [Publish Unit Test Report](#topic-4)
+- [Build Pipelines so that they can be used to build any application](#topic-5)
 
-## <a name="topic-1"></a> Use internal central repo to resolve dependencies (MUST)
+## <a name="topic-1"></a> Use internal repo to resolve dependencies rather than Maven central repo
 
 So far we managed to build our Java application and verify it but it was too slow because Maven had to download all the dependencies from central repo. We need to configure Maven with our internal repository.
 
@@ -176,7 +177,7 @@ The next move is to think about the release process. After every release we are 
 There are not nice dashboards with junit reports like in Bamboo or similar tools. If we don't want to check the build logs to find out which test cases failed, we can add a task that builds the maven site with just the junit reports and publish the site to PCF. But that site would only have the latest build, not a history.
 
 
-## Build Pipelines so that they can be used to build any application
+## <a name="topic-5"></a> Build Pipelines so that they can be used to build any application
 
 Let's recap a number of good practices we introduce [here](realPipeline.md#organizing-pipelines):
 - [x] Pipeline and variable files (`--load-vars-from`) must be versioned controlled.  **Done**
