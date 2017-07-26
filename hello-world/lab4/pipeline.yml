@@ -1,0 +1,36 @@
+---
+jobs:
+- name: job-hello-world
+  plan:
+  - task: produce-greeting
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: busybox
+      outputs:
+        - name: greetings
+      run:
+        path: sh
+        args:
+          - -c
+          - |
+            echo "hello world" > greeting
+            cp greeting greetings
+            
+  - task: print-greeting
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: busybox
+      inputs:
+        - name: greetings
+      run:
+        path: sh
+        args:
+          - -c
+          - |
+            cat greetings/greeting

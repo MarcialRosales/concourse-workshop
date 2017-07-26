@@ -1,0 +1,47 @@
+---
+resources:
+- name: messages
+  type: git
+  source:
+    uri: https://github.com/MarcialRosales/maven-concourse-pipeline
+
+jobs:
+- name: job-hello-world
+  plan:
+  - get: messages
+    trigger: true
+  - task: produce-greeting
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: busybox
+      inputs:
+        - name: messages
+      outputs:
+        - name: greetings
+      run:
+        path: sh
+        args:
+          - -c
+          - |
+            MSG=`head -1 messages/README.md`
+            echo "hello $MSG !!!" > greeting
+            cp greeting greetings
+
+  - task: print-greeting
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: busybox
+      inputs:
+        - name: greetings
+      run:
+        path: sh
+        args:
+          - -c
+          - |
+            cat greetings/greeting
