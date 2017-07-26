@@ -7,7 +7,7 @@ There are a number of things we can do to improve our pipeline. It won't be in a
 - [Create scripts to facilitate setting pipelines](#topic-2)
 - [Artifacts version and releases](#topic-3)
 - [Publish Unit Test Report](#topic-4)
-- [Build Pipelines so that they can be used to build any application](#topic-5)
+- [Generic Pipelines rather One pipeline per application](#topic-5)
 
 ## <a name="topic-1"></a> Use internal repo to resolve dependencies rather than Maven central repo
 
@@ -177,12 +177,12 @@ The next move is to think about the release process. After every release we are 
 There are not nice dashboards with junit reports like in Bamboo or similar tools. If we don't want to check the build logs to find out which test cases failed, we can add a task that builds the maven site with just the junit reports and publish the site to PCF. But that site would only have the latest build, not a history.
 
 
-## <a name="topic-5"></a> Build Pipelines so that they can be used to build any application
+## <a name="topic-5"></a> Generic Pipelines rather One pipeline per application
 
 Let's recap a number of good practices we introduce [here](realPipeline.md#organizing-pipelines):
 - [x] Pipeline and variable files (`--load-vars-from`) must be versioned controlled.  **Done**
 - [x] Sensitive data (like passwords and private keys) stored in variable files should never be versioned controlled (or at least in clear) **Done**
 - [x] Pipelines and variable files should be stored along with the application (or microservice) we are building **Done**
-- [ ] We should not reinvent the wheel on each application. Instead keep pipelines artifacts on a separate git repo. **Not done yet**
+- [ ] We should not reinvent the wheel on each application. We should build pipelines in such a way that we can use them to build any application. **Not done yet**
 - [x] We are aiming for consistent builds. Lock down pipeline and resource type's versions too. **Done**
 - [x] Tasks should be defined in "Task Definition" files rather than inline in the pipeline **Done**
