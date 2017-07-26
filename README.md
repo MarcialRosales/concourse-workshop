@@ -41,8 +41,10 @@ Best:
 4. [Building a continuous integration pipeline](realPipeline.md)
   - Structure pipelines for reusability and other best practices (variables, credentials, templating)
   - Resources and versioning
-  - Software workflows: Trunk and Feature-based development
   - Deploy to Cloud Foundry
+
+5. [Improving our application pipeline](improvingPipeline.md)
+  - Software workflows: Trunk and Feature-based development
   - Provision services
 
 5. Pipeline Management
