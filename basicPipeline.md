@@ -30,7 +30,7 @@ We will complete the pipeline in 7 separate labs:
 - [Lab 6 - Send greeting message to a slack channel and remove the `print-greeting` task](#lab6)
 - [Lab 7 - Send a different greeting message to slack channel if the task `produce-greeting` failed](#lab7)
 
-## <a name="lab1></a> Lab 1 - Print the hello world
+## <a name="lab1"></a> Lab 1 - Print the hello world
 
 Lets start building a "hello world" pipeline to learn the pipeline mechanics and get familiar with Concourse UI too.
 
