@@ -58,6 +58,7 @@ We will complete the pipeline in 7 separate labs:
 - [Lab 3 - Publish application artifact (jar) to a central repository](#lab3)
 - [Lab 4 - Deploy application to PCF](#lab4)
 - [Lab 5 - Externalize credentials](#lab5)
+- [      - Use internal central repo to resolve dependencies](#lab6)
 
 ## <a name="lab1"></a> Lab 1 - Build maven project and run unit tests
 
@@ -667,3 +668,12 @@ We are not storing the `secrets.yml` in Git. There are various techniques to dea
 - Store secrets.yml in some secure location (like LastPass and similar) and retrieve it when we need to push the pipeline.
 - Use [Credential Management](https://concourse.ci/creds.html) feature in Concourse since 3.3.0. Secrets are stored in Vault or CredHub and we need to tell Concourse the key to each secret value very similar we do today with variables. Concourse resolves the key when it needs to. There is a big difference compared to the other models because secrets are never stored in Concourse's db.
 - Use [Spruce](https://github.com/geofffranks/spruce) to resolve secrets stored in Vault just before we push the pipeline in Concourse.
+
+
+## <a name="lab6"></a> Use internal central repo to resolve dependencies
+
+So far we managed to build our Java application and verify it but it was too slow because Maven had to download all the dependencies from central repo. We need to configure Maven with our internal repository.
+
+Hints:
+- We need a new script `tasks/generate-settings.sh`, that generates a standard Maven's `settings.xml` file with the location of our local Maven repository.
+- It is fully explained [here](https://github.com/MarcialRosales/maven-concourse-pipeline/tree/02_use_corporate_maven_repo#pipeline-explained)
