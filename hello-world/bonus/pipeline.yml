@@ -1,0 +1,71 @@
+---
+jobs:
+- name: job-hello-world
+  plan:
+  - aggregate:
+    - task: produce-header
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: busybox
+        outputs:
+          - name: header
+        run:
+          path: sh
+          args:
+            - -c
+            - |
+              echo "producting header"
+              echo "hello world" > header/greeting
+    - task: produce-body
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: busybox
+        outputs:
+          - name: body
+        run:
+          path: sh
+          args:
+            - -c
+            - |
+              echo "producting body"
+              echo "welcome " > body/greeting
+    - task: produce-tail
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: busybox
+        outputs:
+          - name: tail
+        run:
+          path: sh
+          args:
+            - -c
+            - |
+              echo "producting tail"
+              echo "regards " > tail/greeting
+
+  - task: print-greeting
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: busybox
+      inputs:
+        - name: header
+        - name: body
+        - name: tail
+      run:
+        path: sh
+        args:
+          - -c
+          - |
+            cat header/greeting body/greeting tail/greeting
