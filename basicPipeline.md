@@ -29,6 +29,7 @@ We will complete the pipeline in 7 separate labs:
 - [Lab 5 - Read part of the greeting message from a git repository](#lab5)
 - [Lab 6 - Send greeting message to a slack channel and remove the `print-greeting` task](#lab6)
 - [Lab 7 - Send a different greeting message to slack channel if the task `produce-greeting` failed](#lab7)
+- [Bonus lab - Execute tasks in parallel](#bonus)
 
 ## <a name="lab1"></a> Lab 1 - Print the hello world
 
@@ -185,6 +186,7 @@ Eventually we need to customize the pipeline and to do that there is a concept o
 We learnt earlier that a job has a build plan which consists of multiple steps. We are going to introduce a second step/task to our job. Additionally, we are going to introduce the concept of artifacts. The first task will produce an output artifact and the second task will consume that output as an input artifact.
 
 > For the advanced user: Artifacts most commonly come from Resources, e.g. a git resource. When Concourse clones the git repository, it produces an artifact which is then passed as input into a task.
+
 
 1. Produce a new pipeline file. This time we have 2 tasks: `produce-greeting` and `print-greeting`. The first task produces an output artifact. An artifact maps to a folder or volume in container terms. The task `produce-greeting` has an output artifact called `greeting`. And that same artifact is passed as an input artifact to the next task `print-greeting`.
   ```YAML
@@ -398,3 +400,86 @@ jobs:
 
   rest removed for brevity
 ```
+
+## <a name="bonus"></a> Bonus lab - Execute tasks in parallel
+
+Rather than having a single produce-greeting we have produce-header, produce-body, and produce-tail tasks. We want to execute them in parallel and then take the artifacts produced by each one of them to produce a final greeting message.
+
+We use the [aggregate](https://concourse.ci/aggregate-step.html) step and place all the tasks we want to execute in parallel. It is up to Concourse to decide the order and the parallelism. The guarantees are that only when all tasks within the aggregate have successfully completed, it continues with the build plan. If any task failed, the entire aggregate is considered to have failed.  
+
+```YAML
+---
+jobs:
+- name: job-hello-world
+  plan:
+  - aggregate:
+    - task: produce-header
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: busybox
+        outputs:
+          - name: header
+        run:
+          path: sh
+          args:
+            - -c
+            - |
+              echo "producting header"
+              echo "hello world" > header/greeting
+    - task: produce-body
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: busybox
+        outputs:
+          - name: body
+        run:
+          path: sh
+          args:
+            - -c
+            - |
+              echo "producting body"
+              echo "welcome " > body/greeting
+    - task: produce-tail
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: busybox
+        outputs:
+          - name: tail
+        run:
+          path: sh
+          args:
+            - -c
+            - |
+              echo "producting tail"
+              echo "regards " > tail/greeting
+
+  - task: print-greeting
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: busybox
+      inputs:
+        - name: header
+        - name: body
+        - name: tail
+      run:
+        path: sh
+        args:
+          - -c
+          - |
+            cat header/greeting body/greeting tail/greeting
+
+```
+
+We can use aggregate step with resources too.
