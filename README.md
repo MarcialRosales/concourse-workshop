@@ -106,7 +106,7 @@ During the introduction to Concourse we said that the Web UI is only used for di
 
 One quick way to install **fly** is to go to the concourse ui, login with your team, username and password. Once you are logged in you will find this screen that invites you to download the **fly** application.
 
-![concourse initial screen](concourse-1.png)
+![concourse initial screen](assets/concourse-1.png)
 
 Another way to install it is by download them from http://concourse.ci/downloads.html.
 

@@ -353,10 +353,10 @@ If we want to leverage this pipeline mechanism we have to publish the applicatio
 8. The pipeline triggers automatically.
 
   The job took version `04f2ced7c0e4825b171c3bfaf27142a9886861ab` from `source-code` and produced version `0.0.1-20170726.084510-1`.
-  ![Build outcome with versioned input and output resources](concourse-5.png)
+  ![Build outcome with versioned input and output resources](assets/concourse-5.png)
 
   Nexus has the artifact.
-  ![Nexus](concourse-6.png)
+  ![Nexus](assets/concourse-6.png)
 
 
   > Notice Concourse fetches a resource right after pushing it.
@@ -488,7 +488,7 @@ First we are going to add a new job called `deploy` with two tasks. One which pr
 
   `fly -t local sp -p pipeline -c ci/application/pipeline.yml`
 
-  ![Pipeline with build and deploy jobs](concourse-7.png)
+  ![Pipeline with build and deploy jobs](assets/concourse-7.png)
 
 We are ready to push to **PCF**. All we have to do is add new resource that allows us to push applications to PCF.
 
@@ -520,6 +520,6 @@ We are ready to push to **PCF**. All we have to do is add new resource that allo
 4. Update pipeline
   `fly -t local sp -p pipeline -c ci/application/pipeline.yml`
 
-  ![Pipeline deploying to PCF](concourse-8.png)
+  ![Pipeline deploying to PCF](assets/concourse-8.png)
 
 5. Bonus: Verify that the application is running

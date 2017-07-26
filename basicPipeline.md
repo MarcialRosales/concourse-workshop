@@ -74,7 +74,7 @@ Lets start building a "hello world" pipeline to learn the pipeline mechanics and
   - pipeline's states: paused, running. We are in full control. We can unpause it from the UI or from **fly**
     `fly -t main up -p hello-world`
   - job's states
-  ![Concourse first pipeline](concourse-2.png)
+  ![Concourse first pipeline](assets/concourse-2.png)
 
 6. Triggering jobs
   - manually (via **fly** or thru UI) or automatic (via a resource)
@@ -281,7 +281,7 @@ jobs:
 2. Deploy the pipeline
   `fly -t local sp -p hello-world4 -c pipeline.yml`
 
-  ![Concourse pipeline with a resource](concourse-3.png)
+  ![Concourse pipeline with a resource](assets/concourse-3.png)
 
   - A resource is implemented as a docker image with 3 scripts: check, in, and out. If this is only an input resource, the **check** script  returns the latest version available in that resource. The **in** script produces zero or many files in a folder named after the resource's name. The **out** script takes files from a folder and send them to some target location, e.g. a mail server, a slack server, nexus, etc.
   - Resources are always rendered with black background cross
@@ -295,7 +295,7 @@ jobs:
 
 3. And run it
 
-  ![Concourse build with resource](concourse-4.png)
+  ![Concourse build with resource](assets/concourse-4.png)
 
   - A job fetches the latest version (by default it is the latest) available in the resource
   - Concourse UI shows for each job's build, the fetched resources (with a south pointing arrow), the tasks invoked (with `>_` symbol) and the put resources (none for now in our pipeline). Each fetched resource has its version. And for git resources, it shows very useful information such as branch, committer, date and the commit message.  
