@@ -9,6 +9,7 @@ Minimum:
 
 Best:
 - Docker installed
+- Unix desktop (Cigwin)
 
 ## Workshop format
 - There are no slides. This README.md has all the content of the workshop.

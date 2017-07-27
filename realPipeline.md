@@ -12,7 +12,7 @@ We are going to create our application pipeline attending the following best pra
 - Pipeline and variable files (`--load-vars-from`) must be versioned controlled
 - Sensitive data (like passwords and private keys) stored in variable files should never be versioned controlled (or at least in clear)
 - Pipelines and variable files should be stored along with the application (or microservice) we are building
-- We should not reinvent the wheel on each application. Instead keep pipelines artifacts on a separate git repo
+- We should not reinvent the wheel on each application. We should build pipelines in such a way that we can use them to build any application
 - We are aiming for consistent builds. Lock down pipeline and resource type's versions too
 - Tasks should be defined in "Task Definition" files rather than inline in the pipeline
 - Suggested structure:
