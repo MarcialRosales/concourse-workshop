@@ -158,7 +158,11 @@ We continue with the previous pipeline but this time we are going to put more lo
 
 ## <a name="lab3"></a> Lab 3 - Produce a file with a greeting message which must be configured thru a variable
 
-We want to configure the greeting message without having to change the pipeline. Concourse supports the concept of *variables*. In the pipelines we use a variable like `{{var-name}}` and when we set the pipeline thru **fly** we specify the value for that variable. Very simple. **fly** does variable interpolation right before we set the pipeline. For more information, check out http://concourse.ci/fly-set-pipeline.html.
+We want to configure the greeting message without having to change the pipeline. Concourse supports the concept of *variables*. In the pipeline we use a variable like `{{var-name}}` and when we set the pipeline thru **fly** we specify the value for that variable. Very simple. **fly** does variable interpolation right before we set the pipeline. For more information, check out http://concourse.ci/fly-set-pipeline.html.
+
+Variables allows us to customize a pipeline but we still need to pass those variables to the task. Tasks accept parameters and Concourse pass those parameters to the container as environment variables. For example, if we define our task with the parameter `MSG: Hello`, the container will have an environment variable called `MSG` and we can use it, e.g. `echo $MSG`. 
+
+Let's put it in practice. 
 
 1. We are replacing the message "hello world" with a variable called `GRETTING_MSG`. To reference this variable from the pipeline we use this syntax  `{{GRETTING_MSG}}`. However, we need to use this variable from within a task and the way to variable to a task is via [parameters](http://concourse.ci/running-tasks.html#params).  
 
