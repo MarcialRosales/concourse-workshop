@@ -203,9 +203,9 @@ Let's put it in practice.
   - there is another way of doing variable interpolation that we will explorer in another lab.
 
 
-## <a name="lab4"></a> Lab 4 - Refactor print-hello-world into produce-greeting and print-greeting
+## <a name="lab4"></a> Lab 4 - Refactor print-hello-world job into produce-greeting and print-greeting jobs
 
-We learnt earlier that a job has a build plan which consists of multiple steps. We are going to introduce a second step/task to our job. Additionally, we are going to introduce the concept of artifacts. The first task will produce an output artifact and the second task will consume that output as an input artifact.
+We know that a job has a build plan which consists of multiple steps. We are going to introduce a second step/task to our job and another concept, **artifacts** (a.k.a. **volumes**). The first task will produce an output artifact and the second task will consume that output as an input artifact.
 
 > For the advanced user: Artifacts most commonly come from Resources, e.g. a git resource. When Concourse clones the git repository, it produces an artifact which is then passed as input into a task.
 
@@ -265,17 +265,17 @@ We learnt earlier that a job has a build plan which consists of multiple steps. 
 ```
 3. If you deploy it and run it, it terminates on the first task. We will see later on how we can tell Concourse to run a bunch of tasks in parallel.
 
-Note: When the job terminates, the artifacts we have generated within the job like the `greetings` one, are destroyed. They are simply volumes that Concourse mounts onto the containers but once the job terminates those volumes are destroyed. If we don't want to loose that data we need to put it somewhere, i.e. onto an output **resource**, e.g. to Nexus or Artifactory.  
+  > Note: When the job terminates, the artifacts we have generated within the job like the `greetings` one, are destroyed. They are simply volumes that Concourse mounts onto the containers but once the job terminates those volumes are destroyed. If we don't want to loose that data we need to put it somewhere, i.e. onto an output **resource**, e.g. to Nexus or Artifactory.  
 
 ## <a name="lab5"></a> Lab 5 - Read part of the greeting message from a git repository
 
-The greeting message should consist of the `GREETING_MSG` variable followed by the first line of the README.md file from a github repo.
+The greeting message should consist of 2 parts. The first part comes from the `GREETING_MSG` variable. And the second part comes from the first line of the README.md file from a github repo, e.g. https://github.com/MarcialRosales/concourse-workshop/blob/master/README.md
 
 It is time to introduce **resources**, the other key element of a pipeline. Let's recap the pipeline concepts before we work on our next pipeline:
 
-- **Resources** are inputs to a job (and ultimately tasks), and outputs from a job (and ultimately from a task) which are versioned (most of the time), specially if they are inputs.
-- **Artifact** are input/output volumes. An input **resource** like a Git repo will have its own artifact where Concourse clones the repo.
-- A **pipeline** is a chain of jobs which are linked each other via **resources**
+- **Resources** are inputs to a job (and ultimately tasks), and outputs from a job (and ultimately from a task) which are versioned (most of the time).
+- **Artifacts** are input/output volumes. An input **resource** like a Git repo will have its own artifact where Concourse clones the repo. Think of it as a mount volume in Unix terms.
+- A **pipeline** is a chain of jobs which are linked together via **resources**
 - **Jobs** are a group of tasks that will automatically trigger when there is a new version of an input **resource**. If there is nothing new, there is nothing to do.
 
 
