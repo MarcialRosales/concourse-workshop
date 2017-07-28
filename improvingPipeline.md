@@ -7,9 +7,10 @@ There are a number of things we can do to improve our pipeline. It won't be in a
 - [Create scripts to facilitate setting pipelines](#topic-2)
 - [Artifacts version and releases](#topic-3)
 - [Publish Unit Test Report](#topic-4)
-- [Generic Pipelines rather One pipeline per application](#topic-5)
+- [Shared pipelines rather One pipeline per application](#topic-5)
 - [Credentials files more structured, flexible, cleaner and with less duplication](#topic-6)
-
+- [Less cluttered pipelines](#topic-7)
+- [Customizable Pipelines depending on the type of application](#topic-9)
 
 ## <a name="topic-1"></a> Use internal repo to resolve dependencies rather than Maven central repo
 
@@ -179,7 +180,7 @@ The next move is to think about the release process. After every release we are 
 There are not nice dashboards with junit reports like in Bamboo or similar tools. If we don't want to check the build logs to find out which test cases failed, we can add a task that builds the maven site with just the junit reports and publish the site to PCF. But that site would only have the latest build, not a history.
 
 
-## <a name="topic-5"></a> Generic Pipelines rather One pipeline per application
+## <a name="topic-5"></a> Shared pipelines rather One pipeline per application
 
 Let's recap a number of good practices we introduce [here](realPipeline.md#organizing-pipelines):
 - [x] Pipeline and variable files (`--load-vars-from`) must be versioned controlled
@@ -374,3 +375,32 @@ We are going to create 2 groups: main and versioning. In the versioning we move 
   resource-types:
     ....
   ```
+
+
+
+## <a name="topic-8"></a> Customizable Pipelines depending on the type of application
+
+The idea is to build pipelines like a lego. Rather than having one big pipeline we want to build it from smaller pipeline files. It has 2 advantages:
+- Pipelines are easier to read because each pipeline file focuses on one simple functionality
+- We can easily customize pipelines by selecting the pieces we want to use
+
+Say we have 3 type of applications:
+- Java executable applications, i.e. those we deploy to PCF
+  We need to build, test, publish to central repo, deploy and verify that deployed app works.
+
+- Java libraries, i.e pure jar of common infrastructure stuff like caching, etc.
+  We need to build and test and eventually publish it to central repo
+
+- Static web site
+  We need to package it up, publish to central repo, deploy it and verify that it is running.
+
+First we need to create the various pipeline files for each type of functionality:
+- build Java and/or library apps
+- deploy to PCF
+- build Static sites
+
+Second we need scripts to build different type of applications. Each script calls Spruce to merge the corresponding pipeline file to produce a single pipeline file: e.g. set-java-app-pipeline.sh, set-java-lib-pipeline.sh, set-static-site-pipeline.sh. 
+
+
+## <a name="topic-9"></a> Automatically tracking Feature-branches 
+

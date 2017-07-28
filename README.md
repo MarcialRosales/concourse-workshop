@@ -9,7 +9,7 @@ Minimum:
 
 Best:
 - Docker installed
-- Unix desktop (Cigwin)
+- Unix desktop (Cygwin)
 
 ## Workshop format
 - There are no slides. This README.md has all the content of the workshop.
@@ -48,7 +48,7 @@ Best:
   - Software workflows: Trunk and Feature-based development
   - Provision services
 
-5. Pipeline Management
+6. Pipeline Management
   - Bootstrapping: How do we create pipelines?
   - Monitoring and dashboards
 
