@@ -281,42 +281,42 @@ It is time to introduce **resources**, the other key element of a pipeline. Let'
 
 1. Produce a new pipeline file. We have introduced a new element to our pipeline, `resources` and in particular the resource of type `git` called `messages`. If you want to know more about what attribute we can specify for this resource go to https://github.com/concourse/git-resource. To know what other resources exist, check out http://concourse.ci/resource-types.html.
 
-```YAML
----
-resources:
-- name: messages
-  type: git
-  source:
-    uri: https://github.com/MarcialRosales/maven-concourse-pipeline
+  ```YAML
+  ---
+  resources:
+  - name: messages
+    type: git
+    source:
+      uri: https://github.com/MarcialRosales/maven-concourse-pipeline
 
-jobs:
-- name: job-hello-world
-  plan:
-  - get: messages
-  - task: produce-greeting
-    config:
-      platform: linux
-      image_resource:
-        type: docker-image
-        source:
-          repository: busybox
-      inputs:
-        - name: messages
-      outputs:
-        - name: greetings
-      run:
-        path: sh
-        args:
-          - -c
-          - |
-            MSG=`head -1 messages/README.md`
-            echo "hello $MSG !!!" > greeting
-            cp greeting greetings
+  jobs:
+  - name: job-hello-world
+    plan:
+    - get: messages
+    - task: produce-greeting
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: busybox
+        inputs:
+          - name: messages
+        outputs:
+          - name: greetings
+        run:
+          path: sh
+          args:
+            - -c
+            - |
+              MSG=`head -1 messages/README.md`
+              echo "hello $MSG !!!" > greeting
+              cp greeting greetings
 
-  removed the 2nd job for brevity             
-```
+    removed the 2nd job for brevity             
+  ``` 
 
-2. Deploy the pipeline
+2. Deploy the pipeline  
   `fly -t local sp -p hello-world4 -c pipeline.yml`
 
   ![Concourse pipeline with a resource](assets/concourse-3.png)
@@ -347,22 +347,19 @@ jobs:
 
 ### Troubleshooting
 
-Sometimes our build fails we don't understand why and it would be great if we could access the container where the task or the resource ran.
-
-In addition to the Web UI, we can get the list of last builds executed in Concourse: 
+We can get the list of builds either thru the Web or thru **fly**. This command lists the last executed builds:     
 `fly -t local builds` 
 
-We can tail the logs of a running job:
+Another useful command is to get the logs of a completed job or tail the logs of a running job:
 `fly -t local watch -j pipelineName/jobName`
 
-We can "ssh" into the containers running in the job. We know that each step of a build plan runs on a separate container, so we can have containers running tasks and resources.
-To "ssh" into a running container:
+We can "ssh" into the containers running a task or resource. To "ssh" into a container running we use this command:  
 `fly -t local hijack -j pipelineName/jobName` it will prompt us which container we want to "ssh" into. 
 
-We can be more specific and "ssh" directly into the container running a task step without Concourse prompting us for which container we want to access.
+We can be more specific and "ssh" directly into the container running a task:  
 `fly -t example intercept -j some-pipeline/some-job -b some-build -s some-ste` 
 
-Or we can access a container running a resource:
+Or we can access a container running a resource:  
 `fly -t example intercept --check some-pipeline/some-resource`
 
 > Concourse destroys containers when they are not necessary. But it does not destroy them immediately giving us the chance to "ssh" into.
@@ -372,16 +369,7 @@ For more information, check the [docs](https://concourse.ci/fly-intercept.html).
 
 ## <a name="lab6"></a> Lab 6 - Send greeting message to a slack channel and remove the `print-greeting` task
 
-In the previous lab, we added the **git** **resource** we see below. We used it as an input resource.
-  ```YAML
-  resources:
-  - name: messages
-    type: git
-    source:
-      uri: https://github.com/MarcialRosales/maven-concourse-pipeline
-
-  ```
-In this lab, we are going to use another resource but this time it is an only output resource. Concourse comes with a number of [resources types](https://concourse.ci/resource-types.html) installed out of the box. But we can add new resource types. We are going to add one for [slack notifications](https://github.com/cloudfoundry-community/slack-notification-resource).
+We are going to use another resource but this time it is an only output resource. Concourse comes with a number of [resources types](https://concourse.ci/resource-types.html) installed out of the box. But we can add new resource types. We are going to add one for [slack notifications](https://github.com/cloudfoundry-community/slack-notification-resource).
 
 Let's go step by step:
 
@@ -428,24 +416,24 @@ We can tag every step in a build plan with a callback step. The callbacks are `o
 
 1. Send a different slack message when the task fails.
 
-```YAML
-jobs:
-- name: job-hello-world
-  plan:
-  - get: messages
-    trigger: true
-  - task: produce-greeting
-    on_failure:
-      put: slack-greeeting
-      params:
-        text_file: greetings/greeting
-        text: |
-          The task print-greeting has failed. Check it out at: $ATC_EXTERNAL_URL/builds/$BUILD_ID
-          Result was: $TEXT_FILE_CONTENT
-    config:
+  ```YAML
+  jobs:
+  - name: job-hello-world
+    plan:
+    - get: messages
+      trigger: true
+    - task: produce-greeting
+      on_failure:
+        put: slack-greeeting
+        params:
+          text_file: greetings/greeting
+          text: |
+            The task print-greeting has failed. Check it out at: $ATC_EXTERNAL_URL/builds/$BUILD_ID
+            Result was: $TEXT_FILE_CONTENT
+      config:
 
-  rest removed for brevity
-```
+    rest removed for brevity
+  ```
 
 ## <a name="lab8"></a> Send greeting message every few minutes
 
