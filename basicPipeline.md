@@ -151,16 +151,16 @@ We continue with the previous pipeline but this time we are going to put more lo
               cat greeting
 
   ```
-  > The way to have more than one line of shell commands we need to pipe them.
+  > If we need to execute several shell commands  we need to pipe them as illustrated in the pipeline.
 
 2. Deploy the new pipeline with a different name:  
   `fly -t local sp -p greeting -c pipeline.yml`
 
 ## <a name="lab3"></a> Lab 3 - Produce a file with a greeting message which must be configured thru a variable
 
-Eventually we need to customize the pipeline and to do that there is a concept of variables. **fly** does variable interpolation right before we set the pipeline. For more information, check out http://concourse.ci/fly-set-pipeline.html.
+We want to configure the greeting message for that we use *variables*. Pipelines refer to variables and when we set the pipeline thru **fly** we specify the value for those variables. Very simple. **fly** does variable interpolation right before we set the pipeline. For more information, check out http://concourse.ci/fly-set-pipeline.html.
 
-1. We are replacing the message "hello world" with a variable called `GRETTING_MSG`. To reference this variable from the pipeline we use this syntax  `((GRETTING_MSG))`. However, we need to use this variable from within a task and the way to variable to a task is via [parameters](http://concourse.ci/running-tasks.html#params).  
+1. We are replacing the message "hello world" with a variable called `GRETTING_MSG`. To reference this variable from the pipeline we use this syntax  `{{GRETTING_MSG}}`. However, we need to use this variable from within a task and the way to variable to a task is via [parameters](http://concourse.ci/running-tasks.html#params).  
 
   ```YAML
   ---
@@ -175,7 +175,7 @@ Eventually we need to customize the pipeline and to do that there is a concept o
           source:
             repository: busybox
         params:
-          MSG: ((GREETING_MSG))
+          MSG: {{GREETING_MSG}}
         run:
           path: sh
           args:
@@ -193,7 +193,7 @@ Eventually we need to customize the pipeline and to do that there is a concept o
 3. We deploy our new pipeline. We need to specify the new `credentials.yml` file. It is possible to pass variables directly from the command line but that is cumbersome. See how Concourse displays the final pipeline with all the variables resolved.
   `fly -t local sp -p greeting -c pipeline.yml -l credentials.yml`
 
-  - variable interpolation is quite simple, we cannot do string concatenation like this `((var1))-((var2))`. If we need that same value we need to create a new variable.
+  - variable interpolation is quite simple, we cannot do string concatenation like this `{{var1}}-{{var2}}`. If we need that same value we need to create a new variable.
   - there is another way of doing variable interpolation that we will explorer in another lab.
 
 
