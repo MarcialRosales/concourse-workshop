@@ -92,7 +92,7 @@ Lets start building a "hello world" pipeline to learn the pipeline mechanics and
     `fly -t main up -p hello-world`
   - Job's states
 
-  Why is it useful to pause a pipeline or a job or even a resource? One good reason is when we are pushing changes to our application's report but we dont want to trigger the pipeline until we are done with all the changes. Or when the pipeline has some issues (e.g. wrong credentials, bug in some script) that we need to fix and the meanwhile we don't wnat an application's commit to trigger it. 
+  > Why is it useful to pause a pipeline or a job or even a resource? One good reason is when we are pushing changes to our application's report but we dont want to trigger the pipeline until we are done with all the changes. Or when the pipeline has some issues (e.g. wrong credentials, bug in some script) that we need to fix and the meanwhile we don't wnat an application's commit to trigger it. 
 
 6. Triggering jobs
   - manually (via **fly** or thru UI) or automatic (via a resource)  
