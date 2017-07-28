@@ -6,7 +6,7 @@ Concourse workshop
 
 We are going to build a pipeline step by step and on each step we introduce new concepts into the pipeline.
 
-But what is a pipeline then?
+## But what is a pipeline then?
   - A chain of actions or tasks where each task takes some input and produces an output. For instance in the diagram below, `Build` takes a `source` as input and produces a `jar` as output. That same `jar` becomes the input for `Deploy`.
     ```
         {source}----[ Build ]---{jar}---[ Deploy ]----
@@ -14,14 +14,14 @@ But what is a pipeline then?
   - In Concourse, we define a pipeline in a plain YML file. No UI, no external configuration required in concourse. This is called **pipeline as code**.
   - We deploy the pipeline in Concourse by calling the appropriate commands in **fly**
 
-Benefit of this approach:
+## Benefit of this approach:
   - Reproducible builds because configuration is on a file which should be versioned controlled (e.g. git) and Concourse has no state, workers are stateless.
   - Because there is no state in Concourse, no big deal if we loose Concourse. With Bosh we can have Concourse deployed in minutes. We only need to redeploy our pipelines.
 
 
 Concourse is more than a CI tool. It is an automation tool that allows us to take any input (**resource**) and orchestrate the execution of scripts (**tasks**) which take input(s) and produce output(s) (another **resource**).
 
-We will complete the pipeline in 7 separate labs:
+In order to understand the concepts and mechanincs of Concourse, we are going to build a *Hello world* pipeline. We will do it incrementally, one lab at a time:
 - [Lab 1 - Print the hello world](#lab1)
 - [Lab 2 - Produce a file with a greeting message](#lab2)
 - [Lab 3 - Produce a file with a greeting message which must be configured thru a variable](#lab3)
