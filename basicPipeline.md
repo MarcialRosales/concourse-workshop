@@ -160,11 +160,11 @@ We continue with the previous pipeline but this time we are going to put more lo
 
 We want to configure the greeting message without having to change the pipeline. Concourse supports the concept of *variables*. In the pipeline we use a variable like `{{var-name}}` and when we set the pipeline thru **fly** we specify the value for that variable. Very simple. **fly** does variable interpolation right before we set the pipeline. For more information, check out http://concourse.ci/fly-set-pipeline.html.
 
-Variables allows us to customize a pipeline but we still need to pass those variables to the task. Tasks accept parameters and Concourse pass those parameters to the container as environment variables. For example, if we define our task with the parameter `MSG: Hello`, the container will have an environment variable called `MSG` and we can use it, e.g. `echo $MSG`. 
+Variables allows us to customize a pipeline but what about if we need to customize a task?  Tasks accept parameters and Concourse pass those parameters to the container as environment variables. For example, if we define our task with the parameter `MSG: {{var-name}}`, the container will have an environment variable called `MSG` and we can use it, e.g. `echo $MSG`. Obviously, we need to pass the value of `MSG` to **fly** when we set the pipeline.
 
 Let's put it in practice. 
 
-1. We are replacing the message "hello world" with a variable called `GRETTING_MSG`. To reference this variable from the pipeline we use this syntax  `{{GRETTING_MSG}}`. However, we need to use this variable from within a task and the way to variable to a task is via [parameters](http://concourse.ci/running-tasks.html#params).  
+1. We are replacing the message "hello world" with a variable called `GRETTING_MSG`. To reference this variable from the pipeline we use this syntax  `{{GRETTING_MSG}}`. However, we need to pass this variable as a [parameters](http://concourse.ci/running-tasks.html#params) to the task.
 
   ```YAML
   ---
@@ -189,14 +189,16 @@ Let's put it in practice.
               cat greeting
 
   ```
-2. We need to create a new file called `credentials.yml` (we can call it whatever we want) where we define the values for the variables we have referenced in the pipeline:
+2. We need to create a new file called `credentials.yml` where we define the values for the variables we use in the pipeline:
   ```YAML
   GREETINGS_MSG: hello world
   ```
 
-3. We deploy our new pipeline. We need to specify the new `credentials.yml` file. It is possible to pass variables directly from the command line but that is cumbersome. See how Concourse displays the final pipeline with all the variables resolved.
+3. We deploy our new pipeline. 
+  - We need to specify the new `credentials.yml` file.
+  - It is possible to pass variables directly from the command line but that is cumbersome. 
+  - See how Concourse displays the final pipeline with all the variables resolved.
   `fly -t local sp -p greeting -c pipeline.yml -l credentials.yml`
-
   - variable interpolation is quite simple, we cannot do string concatenation like this `{{var1}}-{{var2}}`. If we need that same value we need to create a new variable.
   - there is another way of doing variable interpolation that we will explorer in another lab.
 
