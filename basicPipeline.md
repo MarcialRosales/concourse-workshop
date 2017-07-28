@@ -191,7 +191,7 @@ Let's put it in practice.
   ```
 2. We need to create a new file called `credentials.yml` where we define the values for the variables we use in the pipeline:
   ```YAML
-  GREETINGS_MSG: hello world
+  GREETING_MSG: hello world
   ```
 
 3. We deploy our new pipeline. 
