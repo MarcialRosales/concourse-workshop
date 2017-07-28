@@ -48,7 +48,7 @@ Best:
   - Software workflows: Trunk and Feature-based development
   - Provision services
 
-6. [Pipeline Management](mgtPipelin.md)
+6. [Pipeline Management](mgtPipeline.md)
   - Monitoring and dashboards
 
 
