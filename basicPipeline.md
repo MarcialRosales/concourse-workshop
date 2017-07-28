@@ -117,11 +117,11 @@ Lets start building a "hello world" pipeline to learn the pipeline mechanics and
 
 ### A bit about Concourse Architecture
 
-We already know that Concourse is made up of a UI+RestAPI and a number of worker machines. The UI+RestAPI is called ATC. In addition to ATC, Concourse also has:
+We already know that Concourse is made up of a UI+RestAPI and a number of worker machines. The UI+RestAPI is called **ATC**. In addition to ATC, Concourse also has:
 
-- Workers are machines running Garden, a container technology developed by Pivotal. There can be many and we scale Concourse by adding more of these.
+- **Workers** are machines running Garden, a container technology developed by Pivotal. There can be many and we scale Concourse by adding more of these.
 - Tasks have an attribute called `platform`. And worker machines register with a platform's name, e.g. linux, windows, darwin, iphone, etc. 
-- There is another component called TSA. Each worker registers itself with the Concourse cluster via the TSA.
+- There is another component called **TSA**. Each worker registers itself with the Concourse cluster via the TSA.
 
 
 ## <a name="lab2"></a> Lab 2 - Produce a file with a greeting message
