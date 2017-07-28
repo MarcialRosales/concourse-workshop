@@ -146,3 +146,6 @@ fly -t local login -c http://myconcourse.com -n ourteam -u myuser -p mypassword
 Should that happened we only need to invoke the command: `fly -t mytarget sync`.
 
 > **fly** save your target in ~/.flyrc
+
+It is always useful to know how many targets I have configured:
+`fly targets`

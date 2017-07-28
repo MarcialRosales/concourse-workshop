@@ -335,6 +335,30 @@ jobs:
 
 5. Commit a change and push it to your repo so that Concourse detects it.
 
+### Troubleshooting
+
+Sometimes our build fails we don't understand why and it would be great if we could access the container where the task or the resource ran.
+
+In addition to the Web UI, we can get the list of last builds executed in Concourse: 
+`fly -t local builds` 
+
+We can tail the logs of a running job:
+`fly -t local watch -j pipelineName/jobName`
+
+We can "ssh" into the containers running in the job. We know that each step of a build plan runs on a separate container, so we can have containers running tasks and resources.
+To "ssh" into a running container:
+`fly -t local hijack -j pipelineName/jobName` it will prompt us which container we want to "ssh" into. 
+
+We can be more specific and "ssh" directly into the container running a task step without Concourse prompting us for which container we want to access.
+`fly -t example intercept -j some-pipeline/some-job -b some-build -s some-ste` 
+
+Or we can access a container running a resource:
+`fly -t example intercept --check some-pipeline/some-resource`
+
+> Concourse destroys containers when they are not necessary. But it does not destroy them immediately giving us the chance to "ssh" into.
+
+For more information, check the [docs](https://concourse.ci/fly-intercept.html).
+
 
 ## <a name="lab6"></a> Lab 6 - Send greeting message to a slack channel and remove the `print-greeting` task
 
@@ -518,3 +542,15 @@ jobs:
 ```
 
 We can use aggregate step with resources too.
+
+### More troubleshooting
+
+The number of containers increase very rapidily with the number of pipelines. It is useful to know which containers are currently running. Sometimes the worker machines gets overloaded and jobs fails. 
+
+`fly -t local containers` lists the active containers across all your workers. It is really useful because it tells to which pipeline they belong to and job. 
+
+`fly -t local workers` lists the available workers with the number of containers running each. 
+
+Should you suspect that jobs are failing either due to high cpu utilization or not enough disk space check the Concourse's dashboard provided by Global IT.
+![Concourse dashboard](assets/concourse-9.png) 
+

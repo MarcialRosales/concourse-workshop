@@ -10,7 +10,10 @@ There are a number of things we can do to improve our pipeline. It won't be in a
 - [Shared pipelines rather One pipeline per application](#topic-5)
 - [Credentials files more structured, flexible, cleaner and with less duplication](#topic-6)
 - [Less cluttered pipelines](#topic-7)
-- [Customizable Pipelines depending on the type of application](#topic-9)
+- [Customizable Pipelines depending on the type of application](#topic-8)
+- [Use dedicated pipelines to build custom images](#topic-9)
+- [Automatically tracking Feature-branches](#topic-10)
+- [Provision services](#topic-11)
 
 ## <a name="topic-1"></a> Use internal repo to resolve dependencies rather than Maven central repo
 
@@ -402,5 +405,185 @@ First we need to create the various pipeline files for each type of functionalit
 Second we need scripts to build different type of applications. Each script calls Spruce to merge the corresponding pipeline file to produce a single pipeline file: e.g. set-java-app-pipeline.sh, set-java-lib-pipeline.sh, set-static-site-pipeline.sh. 
 
 
-## <a name="topic-9"></a> Automatically tracking Feature-branches 
+## <a name="topic-10"></a> Automatically tracking Feature-branches 
+
+
+## <a name="topic-9"></a> Use dedicated pipelines to build custom images
+
+Use custom build images as opposed to public one is considered a best practice. We are in full control of what's inside.
+
+We should have one pipeline to build all the images required by the rest of the pipelines. We propose to place it under `ci/images` folder. 
+
+And we should also have a `docker` folder where we place all the dockerfiles. The pipeline monitors these files.
+
+Say we want to build a docker image to run Terraform. [Terraform](https://www.terraform.io/) is a tool that allows us to write, plan, and create Infrastructure as Code. It is going to be extremely useful to provision the PCF services, either managed or user-provided ones. 
+
+1. Create dockerfile `docker/terraform/Dockerfile`. It downloads Terraform binary, it also downloads source code of `CloudFoundry Provider` and compiles it and registers it as a plugin with terraform.
+2. Create pipeline that monitor the dockerfile
+  ```YAML
+  - name: terraform-dockerfile
+    type: git
+    source:
+      uri: (( grab pipeline.source.uri ))
+      branch: (( grab pipeline.source.branch ))
+      private_key: (( grab pipeline.source.private_key ))
+      paths: [ docker/terraform/*]
+
+  ```
+3. Add docker image resource we use to publish it
+  ```YAML
+  - name: terraform-image
+    type: docker-image
+    source:
+      username: (( grab pipeline.registry.username ))
+      password: (( grab pipeline.registry.password ))
+      repository: (( concat pipeline.registry.root "/terraform"))
+
+  ```
+4. Add job that fetches the dockerfile when it changes, builds the docker image and pushes it.
+  ```YAML
+  - name: terraform
+    public: true
+    plan:
+    - aggregate:
+      - get: terraform-dockerfile
+        trigger: true
+      - get: pipeline
+    - put: terraform-image
+      params:
+        build: terraform-dockerfile/docker/terraform
+  ```
+5. Declare credentials within the pipeline repository. We need the following structure:
+  ```YAML
+  pipeline:
+    registry:
+      root: marcialfrg
+      username: dummy
+      password: dummy
+  ```
+6. Add script `set-images-pipeline.sh` to set this pipeline. It is very similar to the `set-pipeline.sh` except that we use `ci/images/pipeline` rather than `ci/application/pipeline`. 
+7. Set up pipeline:
+  `scripts/set-images-pipeline.sh local images`
+ 
+
+## <a name="topic-11"></a> Provision services
+
+If our applications require a number of services in PCF, such as a managed service like a RabbitMQ vhost/user, or a mysql database, or a user-provided-service with the credentials to an external service, we need to automatically provision those before we deploy the application. We cannot expect to do it manually.
+
+We will use Terraform to provision those services. We have built the [Terraform docker image](#topic-9) so we are ready to use it. 
+
+We should have a job to provision services and the deploy job should only trigger when the provision job has successfully completed. 
+
+### Brief introduction to Terraform 
+
+In terraform we use a DSL to describe the final infrastructure we wish to have and Terraform builds that final infrastructure.
+
+If we focus on Cloud Foundry, we want to declare a number of services. To talk to Cloud Foundry we need to configure a **Terraform Provider**. There is an open source (work in progress) provider for Cloud Foundry that allows us to create services, among many other things, in Cloud Foundry. 
+
+In Terraform we declare the infrastructure in `.tf` files. The file below declares the *Cloud Foundry* provider. Terraform has the concept of variables. For instance, we want to externalize the api endpoint, user and password so that we can use this same file for any environment. 
+```
+provider "cf" {
+    api_url = "${var.api_url}"
+    user = "${var.user}"
+    password = "${var.password}"
+}
+```
+
+Along with the `provicer.tf` file we have `vars.tf` where we must declare the variables:
+```
+variable "api_url" {}
+variable "user" {}
+variable "password" {}
+
+variable "org" { }
+variable "space" { }
+
+```
+
+### Applying terraform to our application
+
+Each application may have in their repo a folder (`terraform`) which hosts its infrastructure. 
+
+Previously we said that the pipeline will have a `provision` job between `deploy` and `build-and-verify` jobs. The `provision` job needs terraform files in order to create the corresponding infrastructure. How do we make those terraform files available to the `provision` job is totally up to us. 2 ideas:
+
+- include them in the application's artifact, e.g. within the jar. All we have to do is configure the pom.xml to add the `terraform` folder. 
+  ```xml
+	  <build>
+      <resources>
+          <resource>
+          <targetPath>terraform</targetPath>
+              <directory>terraform</directory>
+          </resource>
+        </resources>
+        ...
+    </build>
+  ```
+- `build-and-verify` job shall produce a release file (zip) which contains the jar and the terraform files.  
+
+The `provision` job calls a task, `terraform`, which extracts the *terraform* folder from the zip file and invokes `terraform apply`. 
+
+### Remote backing state
+
+Terraform produces a local file which contains the state of the infrastructure after we run `terraform apply`. We need to save this file in a central location called [remote state](https://www.terraform.io/docs/state/remote.html). There are a few stores supportes: S3, swift, Artifactory, Consul, and a few others.
+
+If we want to use Terraform we have to configure with a remote store otherwise it will always try to recreate all the infrastructure.
+
+
+1. Add `terraform` task 
+  ```YAML
+  platform: linux
+  image_resource:
+    type: docker-image
+    source:
+      repository: marcialfrg/terraform
+      # TODO PUT A TAG
+  inputs:
+    - name: pipeline
+    - name: artifact
+  params:
+    TERRAFORM_PATH: "BOOT-INF/classes/terraform"
+  run:
+    path: pipeline/tasks/terraform.sh
+
+  ```
+2. Add script 
+  ```sh
+  #!/bin/bash
+
+  env | grep TF_VAR 
+
+  cd artifact
+  ARTIFACT=`ls *`
+
+  unzip $ARTIFACT $TERRAFORM_PATH/*
+
+  cd $TERRAFORM_PATH 
+  terraform plan
+
+  ```
+3. Add `provision` job to the pipeline.
+  - We want it to trigger when we have a new artifact built by `build-and-verify`
+  - We pass the artifact and a number of environment variables to the terraform task
+  - The environment variables are [Terraform variables](https://www.terraform.io/docs/configuration/variables.html). We need to define as many variables as defined in `terraform/vars.tf` file. 
+  - The actual values for those variables come from the applications's credentials file. This is ok for now, but in the long term we don't want to make our pipeline aware of deployment credentials. Mainly because environments come and go and it is a big hassle to update the pipeline when that occurs.   
+
+  ```YAML
+  - name: provision
+    plan:
+    - get: artifact-repo
+      trigger: true
+      passed: [build-and-verify]
+    - get: pipeline
+    - task: apply
+      file: pipeline/tasks/terraform.yml
+      input_mapping: {artifact: artifact-repo}
+      params:
+        TF_VAR_api_url: (( grab deployment.dev.pcf.api ))
+        TF_VAR_user: (( grab deployment.dev.pcf.username ))
+        TF_VAR_password: (( grab deployment.dev.pcf.password ))
+        TF_VAR_org: (( grab deployment.dev.pcf.organization ))
+        TF_VAR_space: (( grab deployment.dev.pcf.space ))
+
+  ```
+
 
