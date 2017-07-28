@@ -195,7 +195,7 @@ Let's put it in practice.
   ```
 
 3. We deploy our new pipeline. 
-  - We need to specify the new `credentials.yml` file.
+  - We need to specify the new `credentials.yml` file.  
     `fly -t local sp -p greeting -c pipeline.yml -l credentials.yml`
   - It is possible to pass variables directly from the command line but that is cumbersome. 
   - See how Concourse displays the final pipeline with all the variables resolved.
