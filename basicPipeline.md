@@ -126,9 +126,10 @@ We already know that Concourse is made up of a UI+RestAPI and a number of worker
 
 ## <a name="lab2"></a> Lab 2 - Produce a file with a greeting message
 
-We continue with the previous pipeline but this time we are going to put more logic into the task. We are going to produce a file with a greeting and print out that file.
+We continue with the previous pipeline but this time we are going to put more logic into the task. We can make it as complicated as it needs to be. We are going to produce a file with a greeting and print out that file. 
 
-1. Produce a new pipeline file. In order to have more shell commands we need to pipeline all the commands to the shell.
+1. Produce a new pipeline file.  
+  
   ```YAML
   ---
   jobs:
@@ -150,8 +151,9 @@ We continue with the previous pipeline but this time we are going to put more lo
               cat greeting
 
   ```
+  > The way to have more than one line of shell commands we need to pipe them.
 
-2. Deploy the new pipeline with a different name:
+2. Deploy the new pipeline with a different name:  
   `fly -t local sp -p greeting -c pipeline.yml`
 
 ## <a name="lab3"></a> Lab 3 - Produce a file with a greeting message which must be configured thru a variable
