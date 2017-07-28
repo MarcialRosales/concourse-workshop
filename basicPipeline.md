@@ -29,6 +29,7 @@ We will complete the pipeline in 7 separate labs:
 - [Lab 5 - Read part of the greeting message from a git repository](#lab5)
 - [Lab 6 - Send greeting message to a slack channel and remove the `print-greeting` task](#lab6)
 - [Lab 7 - Send a different greeting message to slack channel if the task `produce-greeting` failed](#lab7)
+- [Lab 8 - Send greeting message every few minutes](#lab8)
 - [Bonus lab - Execute tasks in parallel](#bonus)
 
 ## <a name="lab1"></a> Lab 1 - Print the hello world
@@ -91,6 +92,8 @@ Lets start building a "hello world" pipeline to learn the pipeline mechanics and
     `fly -t main up -p hello-world`
   - Job's states
 
+  Why is it useful to pause a pipeline or a job or even a resource? One good reason is when we are pushing changes to our application's report but we dont want to trigger the pipeline until we are done with all the changes. Or when the pipeline has some issues (e.g. wrong credentials, bug in some script) that we need to fix and the meanwhile we don't wnat an application's commit to trigger it. 
+
 6. Triggering jobs
   - manually (via **fly** or thru UI) or automatic (via a resource)  
     `fly -t local tj hello-world/job-hello-world` to trigger a job
@@ -109,6 +112,15 @@ Lets start building a "hello world" pipeline to learn the pipeline mechanics and
 - **Jobs** describe the actual work a pipeline does. A Job consists of a build plan. (See `plan` )
 - A **build plan** consists of multiple steps. For now, each step is a task. But we will see later that there are 2 more steps: *fetch* and *update resource steps*. These steps can be arranged to run in parallel or in sequence. (See array with just one element `task`)
 - A **task** is a script executed within a container using a docker image that we specify in the pipeline. We can use any scripting language available in the docker's image, e.g. python, perl, bash, ruby. (see  `platform`, `image_resource`, and `run` attributes of a task)
+
+### A bit about Concourse Architecture
+
+We already know that Concourse is made up of a UI+RestAPI and a number of worker machines. The UI+RestAPI is called ATC.  
+
+- Workers are machines running Garden, a container technology developed by Pivotal. There can be many and we scale Concourse by adding more of these.
+- Tasks have an attribute called `platform`. And worker machines register with a platform's name, e.g. linux, windows, darwin, iphone, etc. 
+- There is another component called TSA. Each worker registers itself with the Concourse cluster via the TSA.
+
 
 ## <a name="lab2"></a> Lab 2 - Produce a file with a greeting message
 
@@ -400,6 +412,29 @@ jobs:
 
   rest removed for brevity
 ```
+
+## <a name="lab8"></a> Send greeting message every few minutes
+
+We can schedule Concourse to trigger jobs in time intervals. The timer is implemented as a [Resource](https://github.com/concourse/time-resource). 
+
+1. Add timer resource which triggers every minute.
+  ```YAML
+  - name: every1m
+    type: time
+    source: {interval: 1m}
+
+  ```
+2. And fetch it from any job that we want to trigger.
+  ```YAML
+  jobs:
+  - name: job-hello-world
+    plan:
+    - get: messages
+      trigger: true
+    - get: every1m
+      trigger: true
+
+  ```
 
 ## <a name="bonus"></a> Bonus lab - Execute tasks in parallel
 

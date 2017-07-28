@@ -1,0 +1,63 @@
+---
+
+resource_types:
+- name: slack-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource
+    tag: latest
+
+
+resources:
+- name: messages
+  type: git
+  source:
+    uri: https://github.com/MarcialRosales/maven-concourse-pipeline
+- name: slack-greeeting
+  type: slack-notification
+  source:
+    url: https://hooks.slack.com/services/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
+- name: every1m
+  type: time
+  source: {interval: 1m}
+
+jobs:
+- name: job-hello-world
+  plan:
+  - get: messages
+    trigger: true
+  - get: every1m
+    trigger: true
+  - task: produce-greeting
+    on_failure:
+      put: slack-greeeting
+      params:
+        text_file: greetings/greeting
+        text: |
+          The task print-greeting has failed. Check it out at: $ATC_EXTERNAL_URL/builds/$BUILD_ID
+          Result was: $TEXT_FILE_CONTENT
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: busybox
+      inputs:
+        - name: messages
+      outputs:
+        - name: greetings
+      run:
+        path: sh
+        args:
+          - -c
+          - |
+            MSG=`head -1 messages/README.md`
+            echo "hello $MSG !!!" > greeting
+            cp greeting greetings
+
+  - put: slack-greeeting
+    params:
+      text_file: greetings/greeting
+      text: |
+        The job-hello-world  has completed. Check it out at: $ATC_EXTERNAL_URL/builds/$BUILD_ID
+        Result was: $TEXT_FILE_CONTENT
