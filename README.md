@@ -48,8 +48,7 @@ Best:
   - Software workflows: Trunk and Feature-based development
   - Provision services
 
-6. Pipeline Management
-  - Bootstrapping: How do we create pipelines?
+6. [Pipeline Management](mgtPipelin.md)
   - Monitoring and dashboards
 
 
