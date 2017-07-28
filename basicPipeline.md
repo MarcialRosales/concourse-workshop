@@ -37,9 +37,9 @@ In order to understand the concepts and mechanincs of Concourse, we are going to
 Lets start building a "hello world" pipeline to learn the pipeline mechanics and get familiar with Concourse UI too.
 
 1. Create a folder. e.g. `mkdir hello-world-ci`
-2. We create the following file `pipeline.yml` within the folder we just created:
+2. We create the following file `pipeline.yml` within the folder we just created:  
   Don't worry if you don't understand this file. Before we complete this lab we will introduce a few concepts that will make it easier to understand it.
-  
+
   ```YAML
   jobs:
   - name: job-hello-world
