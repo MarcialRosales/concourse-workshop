@@ -327,8 +327,12 @@ deployment:
 
 ```
 
-1. Use hierarchical YAML in credentials and secrets
-2. Use Spruce to resolve credential in the pipeline
+We are going to use [Spruce](https://github.com/geofffranks/spruce/releases/). Spruce is a tool that allows us to work with YAML files very easily. We can use it to do simple things like variable interpolation to more complex tasks like injecting YAML blobs, resolve variables from Vault and many more things. 
+
+1. Install **Spruce** (https://github.com/geofffranks/spruce/releases/). Download it, move it to `/usr/local/bin/spruce` and `chmod u+x /usr/local/bin/spruce`.
+2. We are going to use hierarchical YAML in credentials and secrets
+3. We Spruce to inject variables into the pipeline.
+
   ```YAML
   resources:
 
@@ -341,7 +345,7 @@ deployment:
 
   ```
   Replace every {{var}} with the corresponding (( grab equivalent.var ))
-3. Use Spruce to render pipeline in `set-pipeline.sh`
+5. Use Spruce to render pipeline in `set-pipeline.sh`
 ```sh
 ....
 
@@ -406,6 +410,7 @@ Second we need scripts to build different type of applications. Each script call
 
 
 ## <a name="topic-10"></a> Automatically tracking Feature-branches 
+
 
 
 ## <a name="topic-9"></a> Use dedicated pipelines to build custom images

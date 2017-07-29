@@ -545,9 +545,9 @@ We can use aggregate step with resources too.
 
 The number of containers increase very rapidily with the number of pipelines. It is useful to know which containers are currently running. Sometimes the worker machines gets overloaded and jobs fails. 
 
-`fly -t local containers` lists the active containers across all your workers. It is really useful because it tells to which pipeline they belong to and job. 
+`fly -t local containers` lists the active containers across all your workers. It is really useful because it tells us the pipeline and job they belong to. 
 
-`fly -t local workers` lists the available workers with the number of containers running each. 
+`fly -t local workers` lists the available workers along with the number of containers running. 
 
 Should you suspect that jobs are failing either due to high cpu utilization or not enough disk space check the Concourse's dashboard provided by Global IT.
 ![Concourse dashboard](assets/concourse-9.png) 
