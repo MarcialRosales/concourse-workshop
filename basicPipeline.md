@@ -375,7 +375,7 @@ Let's go step by step:
 
 1. Go to https://my.slack.com/services/new/incoming-webhook/
 2. Select your private channel
-3. Slack produces a webhook url usually in the form: https://hooks.slack.com/services/XXXX
+3. Slack produces a webhook url usually in the form: https://hooks.slack.com/services/XXXX. Copy the url provided by Slack.
 4. Modify the pipeline we have been working on and add these lines at the beginning. We are telling Concourse that we want to declare a new resource type. To do so, we give it a name and the docker image that implements it.
 
   ```YAML
@@ -460,9 +460,9 @@ We can schedule Concourse to trigger jobs in time intervals. The timer is implem
 
 ## <a name="bonus"></a> Bonus lab - Execute tasks in parallel
 
-Rather than having a single produce-greeting we have produce-header, produce-body, and produce-tail tasks. We want to execute them in parallel and then take the artifacts produced by each one of them to produce a final greeting message.
+Rather than having a single `produce-greeting` job we could have 3: `produce-header`, `produce-body`, and `produce-tail` tasks. We want to execute them in parallel and then take the artifacts produced by each one of them to produce a final greeting message.
 
-We use the [aggregate](https://concourse.ci/aggregate-step.html) step and place all the tasks we want to execute in parallel. It is up to Concourse to decide the order and the parallelism. The guarantees are that only when all tasks within the aggregate have successfully completed, it continues with the build plan. If any task failed, the entire aggregate is considered to have failed.  
+To execute the tasks in pararell, we place them within an [aggregate](https://concourse.ci/aggregate-step.html). It is up to Concourse to decide the order and the parallelism. Only when all tasks within an aggregate have successfully completed, Concourse continues with the build plan. If any task failed, the entire aggregate is considered to have failed.  
 
 ```YAML
 ---
@@ -539,16 +539,16 @@ jobs:
 
 ```
 
-We can use aggregate step with resources too.
+We can also use aggregate step with resources.
 
 ### More troubleshooting
 
-The number of containers increase very rapidily with the number of pipelines. It is useful to know which containers are currently running. Sometimes the worker machines gets overloaded and jobs fails. 
+The number of containers increase very rapidily with the number of pipelines. It is useful to know which containers are currently running. Sometimes the worker machines gets overloaded and jobs fail. 
 
 `fly -t local containers` lists the active containers across all your workers. It is really useful because it tells us the pipeline and job they belong to. 
 
 `fly -t local workers` lists the available workers along with the number of containers running. 
 
-Should you suspect that jobs are failing either due to high cpu utilization or not enough disk space check the Concourse's dashboard provided by Global IT.
+Nevertherless, we should aim to have a Concourse's dashboard similar to this one. 
 ![Concourse dashboard](assets/concourse-9.png) 
 
