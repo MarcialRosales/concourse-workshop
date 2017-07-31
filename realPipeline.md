@@ -663,7 +663,7 @@ We are going to externalize sensitive credentials into a secrets.yml file and no
 ### Credential Management
 
 We are not storing the `secrets.yml` in Git. There are various techniques to deal with secret management:
-- Generate a symmetrical encryption key and store it in some password mgt tool like Lastpass. Encrypt `secrets.yml` and store it in git.
-- Store secrets.yml in some secure location (like LastPass and similar) and retrieve it when we need to push the pipeline.
-- Use [Credential Management](https://concourse.ci/creds.html) feature in Concourse since 3.3.0. Secrets are stored in Vault or CredHub and we need to tell Concourse the key to each secret value very similar we do today with variables. Concourse resolves the key when it needs to. There is a big difference compared to the other models because secrets are never stored in Concourse's db.
-- Use [Spruce](https://github.com/geofffranks/spruce) to resolve secrets stored in Vault just before we push the pipeline in Concourse.
+1. Generate a symmetrical encryption key and store it in some password mgt tool like Lastpass. Encrypt `secrets.yml` and store it in git.
+2. Store secrets.yml in some secure location (like LastPass and similar) and retrieve it when we need to push the pipeline.
+3. Use [Spruce](https://github.com/geofffranks/spruce) to resolve secrets stored in Vault just before we push the pipeline in Concourse.
+4. Use [Credential Management](https://concourse.ci/creds.html) feature in Concourse since 3.3.0. Secrets are stored in Vault or CredHub and we need to tell Concourse the key to each secret value very similar we do today with variables. Concourse resolves the key when it needs to. This is a big difference compared to the other techniques. This technique does not store the secrets in Concourse's db and/or transferred in cleared over the wire. This technique resolves the secrets just in time when it needs them. However, Vault or CredHub must be highly available. 
