@@ -14,6 +14,7 @@ There are a number of things we can do to improve our pipeline. It won't be in a
 - [Use dedicated pipelines to build custom images](#topic-9)
 - [Automatically tracking Feature-branches](#topic-10)
 - [Provision services](#topic-11)
+- [Blue/Green deployments](#topic-12)
 
 ## <a name="topic-1"></a> Use internal repo to resolve dependencies rather than Maven central repo
 
@@ -592,3 +593,11 @@ If we want to use Terraform we have to configure with a remote store otherwise i
   ```
 
 
+## <a name="topic-12"></a> Blue/Green deployments
+
+- Build a docker image with **cf** program
+- Build a task that determines the current version and the next version. Current/Next can be `blue` or `green`. If the app is not deployed yet, we use either. 
+- Update task that builds the manifest so that it takes from a file the name of the version to use
+- Build a task that promotes the new version: It uses plays with the routes to promote it and delete the old version. 
+- Build pipeline so that it deploys the new version, followed by a job that verifies the new version, followed by a job that promotes the new version, and finally deletes the old version. 
+- Build a task that execute tests case. We should bundle each release with a set of tests. 

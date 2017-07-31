@@ -669,14 +669,16 @@ We are not storing the `secrets.yml` in Git. There are various techniques to dea
 4. Use [Credential Management](https://concourse.ci/creds.html) feature in Concourse since 3.3.0. Secrets are stored in Vault or CredHub and we need to tell Concourse the key to each secret value very similar we do today with variables. Concourse resolves the key when it needs to. This is a big difference compared to the other techniques. This technique does not store the secrets in Concourse's db and/or transferred in cleared over the wire. This technique resolves the secrets just in time when it needs them. However, Vault or CredHub must be highly available. 
 
 
-This is how we could implement technique #1:
+### Credential Management - Technique #1 
+We are going to explain how to implememt technique #1 mentioned in the previous section. 
+
 We carry out these steps once per pipeline:
 1. install [lastpass cli](https://github.com/lastpass/lastpass-cli)
 2. login : `lpass login <accountName>`
 3. generate encryption passphrase for our pipeline: `lpass generate localhost/app1 25`
 4. push password to lpass central store: `lpass sync`
 
-We carry out these steps every time we commit the `secrets.yml` in git
+We carry out this step every time we commit the `secrets.yml` in git:
 1. encrypt `secrets.yml`. It produces a `secrets.yml.gpg`. 
   ```
   p=`lpass show --password localhost/app1`; gpg --batch --passphrase="$p" --cipher-algo AES256 --symmetric secrets.yml ;  unset p
@@ -684,8 +686,8 @@ We carry out these steps every time we commit the `secrets.yml` in git
   git commit -m "modified secrets"
   ```
 
-We carry out these setps within the `set-pipeline.sh` script. It is important we always use the encrypted file and also that `secrets.yml` is in the `.gitignore`. 
-1. from within the `set-pipeline.sh`:
+We modify the `set-pipeline.sh` script so that it always uses the `secrets.yml` that results from decrypting `secrets.yml.gpg`. It is very important we always use the encrypted file and also that `secrets.yml` is in the `.gitignore`. 
+1. modify `set-pipeline.sh`:
   ```
 
   ...
