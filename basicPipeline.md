@@ -371,6 +371,8 @@ For more information, check the [docs](https://concourse.ci/fly-intercept.html).
 
 We are going to use another resource but this time it is an only output resource. Concourse comes with a number of [resources types](https://concourse.ci/resource-types.html) installed out of the box. But we can add new resource types. We are going to add one for [slack notifications](https://github.com/cloudfoundry-community/slack-notification-resource).
 
+> This REST call gives us information about every Concourse worker including the resource type each worker has built-in: `http://localhost:8080/api/v1/worker` 
+
 Let's go step by step:
 
 1. Go to https://my.slack.com/services/new/incoming-webhook/
