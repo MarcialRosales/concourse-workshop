@@ -347,13 +347,13 @@ It is time to introduce **resources**, the other key element of a pipeline. Let'
 
 ### Troubleshooting
 
-We can get the list of builds either thru the Web or thru **fly**. This command lists the last executed builds:     
+We can get the list of builds either thru the Web or thru **fly**. This **fly** command lists the last executed builds:     
 `fly -t local builds` 
 
 Another useful command is to get the logs of a completed job or tail the logs of a running job:
 `fly -t local watch -j pipelineName/jobName`
 
-We can "ssh" into the containers running a task or resource. To "ssh" into a container running we use this command:  
+We can "ssh" into the containers running a task or resource with this command:
 `fly -t local hijack -j pipelineName/jobName` it will prompt us which container we want to "ssh" into. 
 
 We can be more specific and "ssh" directly into the container running a task:  
