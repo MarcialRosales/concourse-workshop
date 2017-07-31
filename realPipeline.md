@@ -6,16 +6,16 @@ Concourse workshop
 
 It is time to move on and do more practical things: Build a CI pipeline for Java applications.
 
-## Organizing pipelines
+## <a name="bp"></a> Organizing pipelines
 
 We are going to create our application pipeline attending the following best practices:
-- Pipeline and variable files (`--load-vars-from`) must be versioned controlled
-- Sensitive data (like passwords and private keys) stored in variable files should never be versioned controlled (or at least in clear)
-- Pipelines and variable files should be stored along with the application (or microservice) we are building
-- We should not reinvent the wheel on each application. We should build pipelines in such a way that we can use them to build any application
-- We are aiming for consistent builds. Lock down pipeline and resource type's versions too
-- Tasks should be defined in "Task Definition" files rather than inline in the pipeline
-- Suggested structure:
+1. Pipeline and variable files (`--load-vars-from`) must be versioned controlled
+2. Sensitive data (like passwords and private keys) stored in variable files should never be versioned controlled (or at least in clear)
+3. Pipelines and variable files should be stored along with the application (or microservice) we are building
+4. We should not reinvent the wheel on each application. We should build pipelines in such a way that we can use them to build any application
+5. We are aiming for consistent builds. Lock down pipeline and resource type's versions too
+6. Tasks should be defined in "Task Definition" files rather than inline in the pipeline
+7. Suggested structure:
   ```
   <pipelineRepo>
     └── ci        <---  contains pipeline definition files
@@ -31,9 +31,9 @@ We are going to create our application pipeline attending the following best pra
           └── dotnet/Dockerfile
   ```
 
-## Set up repository for our application
+## Set up git repository for our application
 
-We will start with just one repository for our application and pipeline. We can move the pipeline to another repo later on.
+We start with just one git repository for both, application and pipeline. However, in to order to following best practice #4, we will move the pipeline to dedicated repo.
 
 1. Create our Spring boot application `app1`. If you dont have curl you can use Postman or directly go to https://start.spring.io.
   ```
@@ -52,7 +52,7 @@ We will start with just one repository for our application and pipeline. We can 
   mkdir -p tasks
   ```
 
-We will complete the pipeline in 7 separate labs:
+We will complete the pipeline in 5 separate labs:
 - [Lab 1 - Build maven project and run unit tests](#lab1)
 - [Lab 2 - Tasks should be defined in "Task Definition" files rather than inline in the pipeline](#lab2)
 - [Lab 3 - Publish application artifact (jar) to a central repository](#lab3)
@@ -131,7 +131,7 @@ We will complete the pipeline in 7 separate labs:
 
 4. Use a specialized docker image to build maven projects
   - We need to search in docker hub to find a maven docker image that suits us. I found https://hub.docker.com/_/maven/.
-  - If we don't specify a tag (or version), Concourse will use `latest`. However, if we want to have reproducible builds we definitely need to specify the version we want, e.g. 3.3.9-jdk-8.
+  - If we don't specify a tag (or version), Concourse will use `latest`. However, if we want to have reproducible builds we definitely need to specify the version we want, e.g. 3.3.9-jdk-8. [Best practice #5](#bp).
 
   Let's try that :
   ```YAML
@@ -174,7 +174,7 @@ So far we have worked on a single file, the `pipeline.yml`. On this file we have
   - we cannot reuse the tasks without copying and pasting it
   - we cannot test tasks in isolation
 
-> Best practice : In general, try and think in terms of small reusable tasks that perform a simple action with the inputs that they're given. If a task ends up having too many inputs then it may be a smell that your task is doing too much. Similar to if a function in a program you were writing had a lot of parameters. In fact, that's a good way to think about tasks: they're functions that take inputs as parameters. Keeping them small and simple allows you to easily run them from your local machine.
+> [Best practice #6](#bp): In general, try and think in terms of small reusable tasks that perform a simple action with the inputs that they're given. If a task ends up having too many inputs then it may be a smell that your task is doing too much. Similar to if a function in a program you were writing had a lot of parameters. In fact, that's a good way to think about tasks: they're functions that take inputs as parameters. Keeping them small and simple allows you to easily run them from your local machine.
 
 
 1. Refactor task into a new file called `tasks/build.yml`
@@ -264,8 +264,8 @@ So far we have worked on a single file, the `pipeline.yml`. On this file we have
   ```
 
 **Things to know about tasks definitions and pipelines**:
-- The input and output resource names used in the task definition file (e.g. `build.yml`) has to match the name of the fetched resources in the pipeline.
-- When the name chose for the task's resources does not match the resource names in the pipeline we can map them. In the example, the input resource is `application` however `build.yml` expects `source-code` as the input resource.
+- The input and output resource names used in the task definition file (e.g. `build.yml`) has to match the name of the fetched resources in the pipeline.  
+- When these names do not match we need to map them. In the example below, the input resource is `application` however `build.yml` expects `source-code` as the input resource. All we have to do is in the task step add an attribute called: `input_mapping` which takes 2 names: **taskResourceName**:**pipelineResourceName**. 
   ```YAML
 
   - get: application
@@ -278,11 +278,11 @@ So far we have worked on a single file, the `pipeline.yml`. On this file we have
 
 ## <a name="lab3"></a> Lab 3 - Publish application artifact (jar) to a central repository
 
-There are two ways of producing an output or outcome in Concourse:
-  - One way is to use a Concourse Resource making Concourse aware that we have produced an output (potentially versioned)
-  - Or directly within a task, e.g. `scp ....` or `mvn deploy`. In a nutshell, Concourse is not aware that we have produced an output
+There are two ways of producing an output in Concourse. Say we have a jar produced by Maven and we want to publish it to Nexus. There are 2 ways: the right and the wrong one:
+  - One way (the right) is to use a **Concourse Resource** making Concourse aware that we have produced an output (potentially versioned)
+  - Or (the wrong) directly within a task and not making Concourse aware of it, e.g. `scp ....` or `mvn deploy`. 
 
-The key concept of a pipeline is that jobs are chained together thru resources. And another way of putting it is that resources flow thru jobs. e.g. jobA produces ResourceA and jobB depends on ResourceA. When there is a new version of ResourceA, jobB triggers and uses the exact version it detected in ResourceA.
+The key concept of a pipeline is that jobs are chained together thru resources. And another way of putting is that resources flow thru jobs. e.g. jobA produces ResourceA and jobB depends on ResourceA. When there is a new version of ResourceA, jobB detects the new version and uses that new version from ResourceA. 
 
 If we want to leverage this pipeline mechanism we have to publish the application's artifact using a resource not directly from a task. We are going to use Nexus 2 Repository Manager and there is a concourse resource for that [maven-resource](https://github.com/Pivotal-Field-Engineering/maven-resource). If we were to deploy to Artifactory we would have used [artifactory-resource](https://github.com/pivotalservices/artifactory-resource). But it turns out this resource does not work well for Nexus.
 
@@ -536,8 +536,8 @@ Hint: Add another job that triggers when the application is deployed with a task
 
 ## <a name="lab5"> Lab 5 - Externalize credentials
 
-Probably most of you have already realized that we are committing the pipeline.yml into Git with credentials in clear, like the username and password of Nexus.
-We are going to externalize sensitive credentials into a secrets.yml file and non-sensitive data into a credentials.yml.
+Probably most of you have already realized that we are committing the pipeline.yml into Git with credentials in clear, like Nexus's username and password.
+We are going to externalize sensitive credentials into a secrets.yml file and non-sensitive data into a credentials.yml.  [Best practice #2](#bp)
 
 1. Put non-sensitive credentials into `credentials.yml`. We are going to store it in the root of the repo.
 
