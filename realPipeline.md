@@ -667,3 +667,38 @@ We are not storing the `secrets.yml` in Git. There are various techniques to dea
 2. Store secrets.yml in some secure location (like LastPass and similar) and retrieve it when we need to push the pipeline.
 3. Use [Spruce](https://github.com/geofffranks/spruce) to resolve secrets stored in Vault just before we push the pipeline in Concourse.
 4. Use [Credential Management](https://concourse.ci/creds.html) feature in Concourse since 3.3.0. Secrets are stored in Vault or CredHub and we need to tell Concourse the key to each secret value very similar we do today with variables. Concourse resolves the key when it needs to. This is a big difference compared to the other techniques. This technique does not store the secrets in Concourse's db and/or transferred in cleared over the wire. This technique resolves the secrets just in time when it needs them. However, Vault or CredHub must be highly available. 
+
+
+This is how we could implement technique #1:
+We carry out these steps once per pipeline:
+1. install [lastpass cli](https://github.com/lastpass/lastpass-cli)
+2. login : `lpass login <accountName>`
+3. generate encryption passphrase for our pipeline: `lpass generate localhost/app1 25`
+4. push password to lpass central store: `lpass sync`
+
+We carry out these steps every time we commit the `secrets.yml` in git
+1. encrypt `secrets.yml`. It produces a `secrets.yml.gpg`. 
+  ```
+  p=`lpass show --password localhost/app1`; gpg --batch --passphrase="$p" --cipher-algo AES256 --symmetric secrets.yml ;  unset p
+  git add `secrets.yml.gpg`
+  git commit -m "modified secrets"
+  ```
+
+We carry out these setps within the `set-pipeline.sh` script. It is important we always use the encrypted file and also that `secrets.yml` is in the `.gitignore`. 
+1. from within the `set-pipeline.sh`:
+  ```
+
+  ...
+
+  PIPELINE=$2
+  SECRETS=secrets.yml
+  
+  # decrypt secrets.yml.gpg -> secrets.yml
+  p=`lpass show --password localhost/$PIPELINE`; gpg  --batch --passphrase="$p" -d $SECRETS.gpg > $SECRETS; unset p
+
+  echo "Generating $PIPELINE pipeline ..."
+  spruce merge --prune meta --prune pipeline --prune app --prune deployment $PIPELINE_FILES $CREDENTIALS $SECRETS > $tmp
+
+  ...
+
+  ```
