@@ -25,7 +25,7 @@ In order to understand the concepts and mechanincs of Concourse, we are going to
 - [Lab 1 - Print the hello world](#lab1)
 - [Lab 2 - Produce a file with a greeting message](#lab2)
 - [Lab 3 - Produce a file with a greeting message which must be configured thru a variable](#lab3)
-- [Lab 4 - Refactor print-hello-world into produce-greeting and print-greeting](#lab4)
+- [Lab 4 - Refactor print-hello-world job into produce-greeting and print-greeting jobs](#lab4)
 - [Lab 5 - Read part of the greeting message from a git repository](#lab5)
 - [Lab 6 - Send greeting message to a slack channel and remove the `print-greeting` task](#lab6)
 - [Lab 7 - Send a different greeting message to slack channel if the task `produce-greeting` failed](#lab7)
