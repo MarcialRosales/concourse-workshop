@@ -30,6 +30,7 @@ In order to understand the concepts and mechanincs of Concourse, we are going to
 - [Lab 6 - Send greeting message to a slack channel and remove the `print-greeting` task](#lab6)
 - [Lab 7 - Send a different greeting message to slack channel if the task `produce-greeting` failed](#lab7)
 - [Lab 8 - Send greeting message every few minutes](#lab8)
+- [Lab 9 - Triggering entire pipeline based on a schedule and also manually](#lab9)
 - [Bonus lab - Execute tasks in parallel](#bonus)
 
 ## <a name="lab1"></a> Lab 1 - Print the hello world
@@ -459,6 +460,83 @@ We can schedule Concourse to trigger jobs in time intervals. The timer is implem
       trigger: true
 
   ```
+
+> We can also add a trigger for a time range
+  ```YAML
+  resources:
+  - name: trigger-daily-between-1am-and-2am
+    type: time
+    source:
+      start: 1:00 AM -0500
+      stop: 2:00 AM -0500
+  ```
+
+
+## <a name="lab9"></a> Lab 9 - Triggering entire pipeline based on a schedule and also manually
+
+Our pipeline is quite simple because it only consists of one job. We are going to introduce 2 jobs where the first job will trigger based on a timer and the 2nd job will trigger upon a succesful build of the first job.
+
+The staring pipeline is this: 2 jobs triggered every minute
+```YAML
+---
+resources:
+- name: trigger-every-minute
+  type: time
+  source:
+    interval: 1m
+
+jobs:
+- name: say-hello
+  plan:
+  - get: trigger-every-minute
+    trigger: true
+  - task: produce-greeting
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: busybox
+      inputs:
+        - name: messages
+      outputs:
+        - name: greetings
+      params:
+        MESSAGE: Hello
+      run:
+        path: sh
+        args:
+          - -c
+          - |
+            echo "$MESSAGE Bob!!!" 
+- name: say-goodbye
+  plan:
+  - get: trigger-every-minute
+    trigger: true
+    passed: [ say-hello ]
+  - task: produce-greeting
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: busybox
+      inputs:
+        - name: messages
+      outputs:
+        - name: greetings
+      params:
+        MESSAGE: GoodBye
+      run:
+        path: sh
+        args:
+          - -c
+          - |
+            echo "$MESSAGE Bob!!!" 
+```
+
+However, we also want to have the option to trigger whenever we want to. We can still do it by triggering the first job. The timer resource produces a new version when we invoke it. 
+
 
 ## <a name="bonus"></a> Bonus lab - Execute tasks in parallel
 

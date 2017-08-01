@@ -1,0 +1,47 @@
+---
+resources:
+- name: trigger-every-minute
+  type: time
+  source:
+    interval: 1m
+
+jobs:
+- name: say-hello
+  plan:
+  - get: trigger-every-minute
+    trigger: true
+  - task: produce-greeting
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: busybox
+      params:
+        MESSAGE: Hello
+      run:
+        path: sh
+        args:
+          - -c
+          - |
+            echo "$MESSAGE Bob!!!" 
+- name: say-goodbye
+  plan:
+  - get: trigger-every-minute
+    trigger: true
+    passed: [ say-hello ]
+  - task: produce-greeting
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: busybox
+      params:
+        MESSAGE: GoodBye
+      run:
+        path: sh
+        args:
+          - -c
+          - |
+            echo "$MESSAGE Bob!!!" 
