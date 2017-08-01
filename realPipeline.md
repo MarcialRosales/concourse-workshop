@@ -58,6 +58,7 @@ We will complete the pipeline in 5 separate labs:
 - [Lab 3 - Publish application artifact (jar) to a central repository](#lab3)
 - [Lab 4 - Deploy application to PCF](#lab4)
 - [Lab 5 - Externalize credentials](#lab5)
+- [Lab 6 - Deploy application when someone approves it (manual gate)](#lab6)
 
 ## <a name="lab1"></a> Lab 1 - Build maven project and run unit tests
 
@@ -534,6 +535,8 @@ We are ready to push to **PCF**. All we have to do is add new resource that allo
 Hint: Add another job that triggers when the application is deployed with a task that simply calls (`curl https://appURL/health`)
 
 
+> There is another resource type to interact with CloudFoundry called [cf-cli](https://github.com/Pivotal-Field-Engineering/cf-cli-resource) however Concourse does not come with this one built-in so we have to declare it.
+
 ## <a name="lab5"> Lab 5 - Externalize credentials
 
 Probably most of you have already realized that we are committing the pipeline.yml into Git with credentials in clear, like Nexus's username and password.
@@ -704,3 +707,107 @@ We modify the `set-pipeline.sh` script so that it always uses the `secrets.yml` 
   ...
 
   ```
+
+
+
+## <a name="lab6"></a> Lab 6 - Deploy application when someone approves it (manual gate)
+
+In Concourse, jobs will only manually trigger, as long as as none of its resources specify the `trigger: true` parameter. If we want to create a **gated** step, we need to insert a simple job that requires a manual trigger. However, we can still specify job dependencies (i.e. `passed: [some-job-name]`). 
+
+
+1. All we have to do is modify the `provision` job so that it does not automatically trigger:
+```YAML
+- name: provision
+  plan:
+  - get: artifact-repo
+    # trigger: true   commented out so that it only runs until we say so
+    passed: [build-and-verify]
+  - get: pipeline
+  - task: apply
+    file: pipeline/tasks/terraform.yml
+    input_mapping: {artifact: artifact-repo}
+    params:
+      TF_VAR_api_url: (( grab deployment.dev.pcf.api ))
+      TF_VAR_user: (( grab deployment.dev.pcf.username ))
+      TF_VAR_password: (( grab deployment.dev.pcf.password ))
+      TF_VAR_org: (( grab deployment.dev.pcf.organization ))
+      TF_VAR_space: (( grab deployment.dev.pcf.space ))
+```
+
+This is an example of a pattern where the first half of the pipeline is in charge of delivering software, i.e. it puts on the shelf, and the 2nd part is about deploying it which requires a manual approval. It is not highly regulated because anyone with access to the pipeline can trigger the `provision` job.
+
+
+## <a name="lab7"></a> Lab 7 - Notify release manager and only provision+deploy when someone approves it (manual gate 2)
+
+Unless someone is monitoring day and night the pipeline, it will not know when a release is ready to be deployed.
+
+It would be great that we can notify somehow. Either via [email](https://github.com/pivotal-cf/email-resource) or slack notification. We can do that after we publish the artifact on the `build-and-verify` job.
+
+1. Declare slack resource:
+  ```YAML
+  resource_types:
+  - name: email
+    type: docker-image
+    source:
+      repository: mdomke/concourse-email-resource
+  
+  resources:   
+  - name: release-announcement
+    type: email
+    source:
+      from: (( grab pipeline.email ))
+
+  ```
+2. Send slack notification:
+  ```YAML
+  - name: build-and-verify
+    plan:
+    - get: source-code
+      trigger: true
+    - get: pipeline
+    - get: version
+    - task: build-and-verify
+      file: pipeline/tasks/build.yml
+    - put: artifact-repo
+      params:
+        file: build-artifact/*.jar
+        pom_file: source-code/pom.xml
+    - task: prepare-release-email
+      file: pipeline/tasks/prepare-release-email.yml      
+    - put: release-announcement
+      params:
+        to: (( grab pipeline.releaseEmail ))
+        subject: ./release-email/email-subject.txt
+        body: ./release-email/email-body.txt
+      
+  ```
+
+
+## <a name="lab8"></a> Lab 8 - Deploy application only when someone approves the corresponding PR (manual gate 3)
+
+In this lab we are going to rely on an approval setp from an external system. In our lab we are going to use Git hub pull requests, but it could be other change management software. The approval step is nothing more than a mechanism that eventually update a file in git and we will use this tor trigger teh gated step and proceed with the deployment. 
+
+
+1. Disable manual triggering of deployment jobs
+  There is a *job* attribute called `disable_manual_trigger` that disable manual triggering of a job, either via the web UI or **fly**. This is really important of us beause we don't want anyone to manually trigger the deploys only via PRs. 
+  
+  All we have to do is to disable it in the `provision` and `deploy` jobs:
+  ```YAML
+  jobs:
+  - name: provision
+    disable_manual_trigger: true
+    ....
+  - name: deploy 
+    disable_manual_trigger: true  
+    ....
+  ``` 
+2. The job that produces a release (i.e. a verified artifact) must send a Pull Request suggesting to deploy the new version. 
+  2.1. First we need a repo that where we have a deployment manifest file that states the version to deploy.
+  2.2. We need a concourse resource for this git repo which monitors only the deployment manifest
+  2.3. We need a taskt that updates that file with the new version in a different branch other than *master*, e.g. *build*
+  2.4. We need to push that new version to the *build* branch
+  2.5. We need a task that creates a pull request to merge the *build* into the *master*
+
+3. We ammend the job `provision` so that it triggers only when there is a change to the resource that monitors the deployment manifest. 
+
+
