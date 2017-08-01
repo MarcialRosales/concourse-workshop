@@ -346,6 +346,8 @@ It is time to introduce **resources**, the other key element of a pipeline. Let'
 
 5. Commit a change and push it to your repo so that Concourse detects it.
 
+> Tip: Use `[ci skip]` or `[skip ci]` keyword with the commit's nessage when we don't want Concourse to trigger a build. More details [here](https://github.com/concourse/git-resource). 
+
 ### Troubleshooting
 
 We can get the list of builds either thru the Web or thru **fly**. This **fly** command lists the last executed builds:     
