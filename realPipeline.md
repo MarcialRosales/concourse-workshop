@@ -168,6 +168,8 @@ We will complete the pipeline in 5 separate labs:
 
 5. So far we have managed to build our maven project.
 
+> Tip: It could be interesting to build a docker image with all the external dependencies within a local maven cache. This will speed up the build. 
+
 ## <a name="lab2"></a> Lab 2 - Tasks should be defined in "Task Definition" files rather than inline in the pipeline
 
 So far we have worked on a single file, the `pipeline.yml`. On this file we have defined **inline** the task configuration, a.k.a. *task definition*. However that is far from ideal for various reasons:
@@ -500,6 +502,8 @@ First we are going to add a new job called `deploy` with two tasks. One which pr
 
 We are ready to push to **PCF**. All we have to do is add new resource that allows us to push applications to PCF.
 
+> Tip: Use [attempts](http://concourse.ci/retry-step.html) for deployment tasks which may temporarly fail due to network failures. 
+
 1. Add PCF resource. Concourse comes with [cf](https://github.com/concourse/cf-resource) **resource-type** thus we don't have to declare it.
 
   ```YAML
@@ -802,9 +806,35 @@ In this lab we are going to rely on an approval setp from an external system. In
     ....
   ``` 
 2. The job that produces a release (i.e. a verified artifact) must send a Pull Request suggesting to deploy the new version. 
-  2.1. First we need a repo that where we have a deployment manifest file that states the version to deploy.
-  2.2. We need a concourse resource for this git repo which monitors only the deployment manifest
-  2.3. We need a taskt that updates that file with the new version in a different branch other than *master*, e.g. *build*
+  - First we need a repo that where we have a deployment manifest file that states the version to deploy.
+    For convenience, let's use https://github.com/MarcialRosales/concourse-workshop-ci but create a branch for the deployments called `deployments`. 
+
+    ```sh
+    git checkout --orphan deployments
+    git rm --cached -r .
+    rm -rf *
+    rm .gitignore .gitmodules
+    touch README.md
+    git add .
+    git commit -m "new branch"
+    git push origin deployments
+
+    ```
+
+  - We need a concourse resource for this git repo which monitors only the deployment manifest for the `development` environment
+
+    ```YAML
+    - name: deployment-manifest
+      type: git
+      source:
+        uri: (( grab app.source.uri ))
+        branch: deployments
+        private_key: (( grab app.source.private_key ))
+        paths:
+          - development/manifest.yml
+    ```
+
+  - We need a task that updates that the deployment manifest with the version we are releasing. We have to do it in a different branch other than *master*, e.g. *build*. 
   2.4. We need to push that new version to the *build* branch
   2.5. We need a task that creates a pull request to merge the *build* into the *master*
 
