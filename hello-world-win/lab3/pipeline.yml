@@ -17,7 +17,7 @@ jobs:
         run:
           path: powershell
           args:
-          - ./build.ps1
+          - lab3/build.ps1
           - -mode test -targetFramework 4.6.1
           dir: code
         inputs:
