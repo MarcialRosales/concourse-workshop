@@ -23,9 +23,8 @@ jobs:
         run:
           path: powershell
           args:
-          - .\hello-world-win\lab4\build.ps1
-          - -mode test -targetFramework 4.6.1        
-          dir: pipeline
+          - pipeline\hello-world-win\lab4\build.ps1
+          - -mode test -targetFramework 4.6.1                  
         inputs:
         - name: code
         - name: pipeline
