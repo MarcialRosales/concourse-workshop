@@ -1,0 +1,12 @@
+jobs:
+  - name: hello
+    plan:
+    - task: say-hello
+      config:
+        platform: windows
+        run:
+          path: powershell
+          args: 
+          - -Command
+          - Write-Host 'hello'
+          
